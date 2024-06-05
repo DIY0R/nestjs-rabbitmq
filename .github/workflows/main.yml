@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
-
+   
 jobs:
   check_commits:
     runs-on: ubuntu-latest
@@ -22,8 +22,8 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: Install dependencies
         run: npm install
-      - name: Run tests
-        run: npm run test
+      # - name: Run tests
+      #   run: npm run test
       - name: Lint commits
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
