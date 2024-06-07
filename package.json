@@ -13,6 +13,8 @@
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
+    "@types/amqplib": "^0.10.5",
+    "amqplib": "^0.10.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
