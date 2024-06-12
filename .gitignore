@@ -16,7 +16,7 @@ lerna-debug.log*
 .DS_Store
 
 
-/tests
+/tests-app
 # Tests
 /coverage
 /.nyc_output

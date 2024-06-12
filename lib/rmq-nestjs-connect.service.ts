@@ -1,17 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RMQ_CONNECT_OPTIONS } from './constants';
-import * as amqplib from 'amqplib';
 import { RabbitMQConfig } from './interfaces/connection';
-import amqp, {
-  AmqpConnectionManager,
-  ChannelWrapper,
-} from 'amqp-connection-manager';
+import { Channel, Connection, connect } from 'amqplib';
 
 @Injectable()
 export class RmqNestjsConnectService {
-  private connection: AmqpConnectionManager = null;
-  private baseChanel: ChannelWrapper = null;
-  private replyToChannel: ChannelWrapper = null;
+  private connection: Connection = null;
+  private baseChannel: Channel = null;
+  private replyToChannel: Channel = null;
 
   private declared = false;
   constructor(
@@ -19,23 +15,36 @@ export class RmqNestjsConnectService {
   ) {}
   async onModuleInit(): Promise<void> {
     if (this.declared) throw Error('Root RmqNestjsModule already declared!');
-    await this.connect(this.options);
-    this.createChanels();
+    await this.setUpConnect(this.options);
+    this.createChannels();
     this.declared = true;
   }
 
-  private async connect(options: RabbitMQConfig) {
+  private async setUpConnect(options: RabbitMQConfig) {
     const { username, password, hostname, port, virtualHost } = options;
     const url = `amqp://${username}:${password}@${hostname}:${port}/${virtualHost}`;
-    const connect = amqp.connect(url);
-    this.connection = connect;
+
+    this.connection = await connect(url);
+    console.log(this.connection);
   }
-  private async createChanels() {
-    this.baseChanel = this.connection.createChannel({ json: true });
-    this.replyToChannel = this.connection.createChannel({ json: true });
+  private async createChannels() {
+    try {
+      this.baseChannel = await this.createChannel();
+      this.replyToChannel = await this.createChannel();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async createChannel() {
+    try {
+      return await this.connection.createChannel();
+    } catch (error) {
+      throw error;
+    }
   }
   async onModuleDestroy(): Promise<void> {
-    await this.baseChanel.close();
+    await this.baseChannel.close();
     await this.replyToChannel.close();
     await this.connection.close();
   }
