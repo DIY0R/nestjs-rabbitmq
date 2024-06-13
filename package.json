@@ -1,7 +1,7 @@
 {
   "name": "nestjs-rmq-bridge",
   "version": "0.0.1",
-  "description": "Nestjs rabbitMQ module  ",
+  "description": "Nestjs rabbitMQ module",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
