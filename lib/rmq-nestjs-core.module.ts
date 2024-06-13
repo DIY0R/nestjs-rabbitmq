@@ -1,12 +1,15 @@
 import { DynamicModule, Module, Global } from '@nestjs/common';
 import { RmqNestjsConnectService } from './rmq-nestjs-connect.service';
 import { RMQ_CONNECT_OPTIONS } from './constants';
-import { IRMQSRootAsyncOptions, RabbitMQConfig } from './interfaces/connection';
+import {
+  IRMQSRootAsyncOptions,
+  IRabbitMQConfig,
+} from './interfaces/connection';
 
 @Global()
 @Module({})
 export class RmqNestjsCoreModule {
-  static forRoot(options: RabbitMQConfig): DynamicModule {
+  static forRoot(options: IRabbitMQConfig): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
       providers: [

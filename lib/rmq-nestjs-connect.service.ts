@@ -1,31 +1,94 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { RMQ_CONNECT_OPTIONS } from './constants';
-import { RabbitMQConfig } from './interfaces/connection';
-import { Channel, Connection, connect } from 'amqplib';
+import { IRabbitMQConfig } from './interfaces/connection';
+import { Channel, Connection, Replies, connect } from 'amqplib';
+import { IExchange } from './interfaces/exchange';
+import { IQueue, TypeQueue } from './interfaces/queue';
+import { BindQueue } from './interfaces/bindQueue';
 
 @Injectable()
-export class RmqNestjsConnectService {
+export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private connection: Connection = null;
   private baseChannel: Channel = null;
   private replyToChannel: Channel = null;
 
   private declared = false;
   constructor(
-    @Inject(RMQ_CONNECT_OPTIONS) private readonly options: RabbitMQConfig,
+    @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig
   ) {}
   async onModuleInit(): Promise<void> {
     if (this.declared) throw Error('Root RmqNestjsModule already declared!');
     await this.setUpConnect(this.options);
-    this.createChannels();
+    await this.createChannels();
     this.declared = true;
   }
 
-  private async setUpConnect(options: RabbitMQConfig) {
+  public async assertExchange(
+    options: IExchange
+  ): Promise<Replies.AssertExchange> {
+    try {
+      const exchange = await this.baseChannel.assertExchange(
+        options.exchange,
+        options.type,
+        options.options
+      );
+      return exchange;
+    } catch (error) {
+      throw new Error(
+        `Failed to assert exchange '${options.exchange}': ${error.message}`
+      );
+    }
+  }
+  public async assertQueue(
+    typeQueue: TypeQueue,
+    options: IQueue
+  ): Promise<Replies.AssertQueue> {
+    try {
+      if (typeQueue == TypeQueue.QUEUE) {
+        const queue = await this.baseChannel.assertQueue(
+          options.queue,
+          options.options
+        );
+        return queue;
+      }
+      const queue = await this.replyToChannel.assertQueue(
+        options.queue || '',
+        options.options
+      );
+      return queue;
+    } catch (error) {
+      throw new Error(`Failed to assert ${typeQueue} queue: ${error.message}`);
+    }
+  }
+  async bindQueue(bindQueue: BindQueue): Promise<void> {
+    console.log(
+      bindQueue.queue,
+      bindQueue.source,
+      bindQueue.pattern,
+      bindQueue.args
+    );
+    try {
+      await this.baseChannel.bindQueue(
+        bindQueue.queue,
+        bindQueue.source,
+        bindQueue.pattern,
+        bindQueue.args
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`
+      );
+    }
+  }
+  private async setUpConnect(options: IRabbitMQConfig) {
     const { username, password, hostname, port, virtualHost } = options;
     const url = `amqp://${username}:${password}@${hostname}:${port}/${virtualHost}`;
-
     this.connection = await connect(url);
-    console.log(this.connection);
   }
   private async createChannels() {
     try {
