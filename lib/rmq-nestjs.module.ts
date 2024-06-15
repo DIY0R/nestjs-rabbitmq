@@ -4,10 +4,11 @@ import {
   IMessageBroker,
   IRMQSRootAsyncOptions,
   IRabbitMQConfig,
-} from './interfaces/connection';
-import { RMQ_BROKER_OPTIONS, RMQ_CONNECT_OPTIONS } from './constants';
+} from './interfaces';
+import { RMQ_BROKER_OPTIONS } from './constants';
 import { RmqNestjsCoreModule } from './rmq-nestjs-core.module';
-import { RmqNestjsConnectService } from './rmq-nestjs-connect.service';
+import { DiscoveryModule } from '@nestjs/core';
+import { MetaTegsScannerService } from './common';
 
 @Module({})
 export class RmqNestjsModule {
@@ -26,11 +27,14 @@ export class RmqNestjsModule {
   static forFeature(options: IMessageBroker): DynamicModule {
     return {
       module: RmqNestjsModule,
+      imports: [DiscoveryModule],
       providers: [
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
+        { provide: 'TARGET_MODULE', useValue: options.targetModuleName },
         RmqService,
+        MetaTegsScannerService,
       ],
-      exports: [RmqService],
+      exports: [RmqService, MetaTegsScannerService],
     };
   }
 }
