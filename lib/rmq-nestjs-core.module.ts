@@ -1,10 +1,7 @@
 import { DynamicModule, Module, Global } from '@nestjs/common';
 import { RmqNestjsConnectService } from './rmq-nestjs-connect.service';
 import { RMQ_CONNECT_OPTIONS } from './constants';
-import {
-  IRMQSRootAsyncOptions,
-  IRabbitMQConfig,
-} from './interfaces/connection';
+import { IRMQSRootAsyncOptions, IRabbitMQConfig } from './interfaces';
 
 @Global()
 @Module({})

@@ -5,11 +5,14 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { RMQ_CONNECT_OPTIONS } from './constants';
-import { IRabbitMQConfig } from './interfaces/connection';
+import {
+  IRabbitMQConfig,
+  IExchange,
+  IQueue,
+  TypeQueue,
+  BindQueue,
+} from './interfaces';
 import { Channel, Connection, Replies, connect } from 'amqplib';
-import { IExchange } from './interfaces/exchange';
-import { IQueue, TypeQueue } from './interfaces/queue';
-import { BindQueue } from './interfaces/bindQueue';
 
 @Injectable()
 export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
@@ -66,12 +69,6 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
   async bindQueue(bindQueue: BindQueue): Promise<void> {
-    console.log(
-      bindQueue.queue,
-      bindQueue.source,
-      bindQueue.pattern,
-      bindQueue.args
-    );
     try {
       await this.baseChannel.bindQueue(
         bindQueue.queue,
