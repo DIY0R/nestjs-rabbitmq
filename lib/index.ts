@@ -1,2 +1,2 @@
-export * from './rmq-nestjs.module';
-export * from './rmq-nestjs.service';
+export * from './rmq.module';
+export * from './rmq.service';

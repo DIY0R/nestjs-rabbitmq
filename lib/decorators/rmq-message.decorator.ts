@@ -1,4 +1,4 @@
-import { RMQ_MESSAGE_META_TEG } from 'lib/constants';
+import { RMQ_MESSAGE_META_TEG } from '../constants';
 
 export function RMQMessage(event: string) {
   return function (target: any, propertyKey: string | symbol, descriptor: any) {

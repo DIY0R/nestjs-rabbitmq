@@ -10,17 +10,19 @@ import {
   IExchange,
   IQueue,
   TypeQueue,
-  BindQueue,
+  IBindQueue,
+  ISendMessage,
+  ISendToReplyQueueOptions,
 } from './interfaces';
-import { Channel, Connection, Replies, connect } from 'amqplib';
+import { Channel, Connection, ConsumeMessage, Replies, connect } from 'amqplib';
 
 @Injectable()
 export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private connection: Connection = null;
   private baseChannel: Channel = null;
   private replyToChannel: Channel = null;
-
   private declared = false;
+  
   constructor(
     @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig
   ) {}
@@ -47,6 +49,11 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       );
     }
   }
+  public ack(
+    ...params: Parameters<Channel['ack']>
+  ): ReturnType<Channel['ack']> {
+    return this.baseChannel.ack(...params);
+  }
   public async assertQueue(
     typeQueue: TypeQueue,
     options: IQueue
@@ -68,7 +75,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error.message}`);
     }
   }
-  async bindQueue(bindQueue: BindQueue): Promise<void> {
+  async bindQueue(bindQueue: IBindQueue): Promise<void> {
     try {
       await this.baseChannel.bindQueue(
         bindQueue.queue,
@@ -80,6 +87,59 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(
         `Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`
       );
+    }
+  }
+  async sendToReplyQueue(sendToQueueOptions: ISendToReplyQueueOptions) {
+    try {
+      this.replyToChannel.sendToQueue(
+        sendToQueueOptions.replyTo,
+        Buffer.from(JSON.stringify(sendToQueueOptions.content)),
+        {
+          correlationId: sendToQueueOptions.correlationId,
+        }
+      );
+    } catch (error) {
+      throw new Error(`Failed to send Reply Queue`);
+    }
+  }
+  async listerReplyQueue(
+    queue: string,
+    listenQueue: (msg: ConsumeMessage | null) => void
+  ) {
+    try {
+      await this.replyToChannel.consume(queue, listenQueue, {
+        noAck: false,
+      });
+    } catch (error) {
+      throw new Error(`Failed to send listen Reply Queue`);
+    }
+  }
+  async listenQueue(
+    queue: string,
+    listenQueue: (msg: ConsumeMessage | null) => void
+  ): Promise<void> {
+    try {
+      await this.baseChannel.consume(queue, listenQueue, {
+        noAck: false,
+      });
+    } catch (error) {
+      throw new Error(`Failed to listen Queue`);
+    }
+  }
+
+  publish(sendMessage: ISendMessage): void {
+    try {
+      this.baseChannel.publish(
+        sendMessage.exchange,
+        sendMessage.routingKey,
+        Buffer.from(JSON.stringify(sendMessage.content)),
+        {
+          replyTo: sendMessage.options.replyTo,
+          correlationId: sendMessage.options.correlationId,
+        }
+      );
+    } catch (error) {
+      throw new Error(`Failed to send message ${error}`);
     }
   }
   private async setUpConnect(options: IRabbitMQConfig) {
