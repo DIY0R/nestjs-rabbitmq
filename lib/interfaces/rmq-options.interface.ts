@@ -31,13 +31,32 @@ export interface IRMQSRootAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 
 export interface IMessageBroker {
   exchange: IExchange;
-  queue?: IQueue;
   replyTo: Options.AssertQueue;
+  queue?: IQueue;
+  messageTimeout?: number;
   targetModuleName: string;
+  serviceName?: string;
 }
-export interface BindQueue {
+export interface IBindQueue {
   queue: string;
   source: string;
   pattern: string;
   args?: Record<string, any>;
+}
+
+export interface ISendMessage {
+  exchange: string;
+  routingKey: string;
+  content: Record<string, any>;
+  options: Options.Publish;
+}
+export interface IPublishOptions extends Options.Publish {
+  timeout?: number;
+}
+
+export interface ISendToReplyQueueOptions {
+  replyTo: string;
+  content: Record<string, any>;
+  correlationId: string;
+  options?: Options.Publish;
 }

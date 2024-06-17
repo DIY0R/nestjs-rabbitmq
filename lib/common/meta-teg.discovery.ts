@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ModulesContainer, Reflector } from '@nestjs/core';
 import { MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
-import { MetaTegsMap } from '../interfaces';
+import { TARGET_MODULE } from '../constants';
+import { IMetaTegsMap } from '../interfaces';
 
 @Injectable()
 export class MetaTegsScannerService {
@@ -10,7 +11,7 @@ export class MetaTegsScannerService {
     private readonly metadataScanner: MetadataScanner,
     private readonly reflector: Reflector,
     private readonly modulesContainer: ModulesContainer,
-    @Inject('TARGET_MODULE') private readonly targetModuleName: string,
+    @Inject(TARGET_MODULE) private readonly targetModuleName: string,
   ) {}
 
   public scan(metaTeg: string) {
@@ -44,7 +45,7 @@ export class MetaTegsScannerService {
 
   private lookupMethods(
     metaTeg: string,
-    rmqMessagesMap: MetaTegsMap,
+    rmqMessagesMap: IMetaTegsMap,
     instance: object,
     prototype: object,
     methodName: string,
