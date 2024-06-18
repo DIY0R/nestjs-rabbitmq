@@ -11,44 +11,47 @@ export class MetaTegsScannerService {
     private readonly metadataScanner: MetadataScanner,
     private readonly reflector: Reflector,
     private readonly modulesContainer: ModulesContainer,
-    @Inject(TARGET_MODULE) private readonly targetModuleName: string,
+    @Inject(TARGET_MODULE) private readonly targetModuleName: string
   ) {}
 
   public scan(metaTeg: string) {
     const rmqMessagesMap = new Map();
-    const modules = [...this.modulesContainer.values()];
 
-    const currentModule = modules.find(
-      (module) => module.metatype?.name === this.targetModuleName,
-    );
+    const currentModule = this.getCurrentModule();
     if (!currentModule) return rmqMessagesMap;
-    const providers = [...currentModule.providers.values()];
-    const controllers = [...currentModule.controllers.values()];
-    [...providers, ...controllers].forEach((provider: InstanceWrapper) => {
+
+    const providersAndControllers =
+      this.getProvidersAndControllers(currentModule);
+
+    providersAndControllers.forEach((provider: InstanceWrapper) => {
       const { instance } = provider;
       const prototype = Object.getPrototypeOf(instance);
       this.metadataScanner
         .getAllMethodNames(prototype)
         .forEach((name: string) =>
-          this.lookupMethods(
-            metaTeg,
-            rmqMessagesMap,
-            instance,
-            prototype,
-            name,
-          ),
+          this.lookupMethods(metaTeg, rmqMessagesMap, instance, prototype, name)
         );
     });
 
     return rmqMessagesMap;
   }
-
+  private getCurrentModule() {
+    const modules = [...this.modulesContainer.values()];
+    return (
+      modules.find(
+        (module) => module.metatype?.name === this.targetModuleName
+      ) || null
+    );
+  }
+  private getProvidersAndControllers(module) {
+    return [...module.providers.values(), ...module.controllers.values()];
+  }
   private lookupMethods(
     metaTeg: string,
     rmqMessagesMap: IMetaTegsMap,
     instance: object,
     prototype: object,
-    methodName: string,
+    methodName: string
   ) {
     const method = prototype[methodName];
     const event = this.reflector.get<string>(metaTeg, method);

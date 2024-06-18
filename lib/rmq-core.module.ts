@@ -9,7 +9,7 @@ import { IAppOptions } from './interfaces/app-options.interface';
 export class RmqNestjsCoreModule {
   static forRoot(
     options: IRabbitMQConfig,
-    appOptions?: IAppOptions
+    appOptions?: IAppOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
@@ -23,7 +23,7 @@ export class RmqNestjsCoreModule {
   }
   static forRootAsync(
     options: IRMQSRootAsyncOptions,
-    appOptions?: IAppOptions
+    appOptions?: IAppOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsCoreModule,

@@ -6,7 +6,12 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import { IMessageBroker, IPublishOptions, TypeQueue } from './interfaces';
+import {
+  IMessageBroker,
+  IPublishOptions,
+  ImqService,
+  TypeQueue,
+} from './interfaces';
 import { IMetaTegsMap } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
@@ -40,7 +45,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
     @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions,
+    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions
   ) {
     this.logger = appOptions.logger
       ? appOptions.logger
@@ -50,14 +55,14 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.rmqMessageTegs =
       this.metaTegsScannerService.scan(RMQ_MESSAGE_META_TEG);
-    await this.bindQueueExchange();
+    await this.init();
     this.isInitialized = true;
   }
 
   public async send<IMessage, IReply>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions,
+    options?: IPublishOptions
   ): Promise<IReply> {
     return new Promise<IReply>(async (resolve, reject) => {
       await this.initializationCheck();
@@ -102,53 +107,61 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     }
   }
   private async listerReplyQueue(
-    message: ConsumeMessage | null,
+    message: ConsumeMessage | null
   ): Promise<void> {
     if (message.properties.correlationId) {
       this.sendResponseEmitter.emit(message.properties.correlationId, message);
     }
   }
-  private async bindQueueExchange() {
+
+  private async init() {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
-      this.options.exchange,
+      this.options.exchange
     );
-    if (this.options.replyTo) await this.assertReplyQueue();
+    if (this.options.replyTo) await this.assertReplyQueueBind();
+    await this.bindQueueExchange();
+  }
+  private async bindQueueExchange() {
     if (!this.options.queue || !this.rmqMessageTegs?.size)
-      return this.logger.warn(INOF_NOT_FULL_OPTIONS);
+      return this.logger.warn(
+        this.options.targetModuleName,
+        INOF_NOT_FULL_OPTIONS
+      );
     const queue = await this.rmqNestjsConnectService.assertQueue(
-      TypeQueue.REPLY_QUEUE,
-      this.options.queue,
+      TypeQueue.QUEUE,
+      this.options.queue
     );
     this.rmqMessageTegs.forEach(async (_, key) => {
       await this.rmqNestjsConnectService.bindQueue({
         queue: queue.queue,
         source: this.exchange.exchange,
         pattern: key.toString(),
-        // args:any - comming soon
       });
     });
     await this.rmqNestjsConnectService.listenQueue(
       this.options.queue.queue,
-      this.listenQueue.bind(this),
+      this.listenQueue.bind(this)
+    );
+  }
+
+  private async assertReplyQueueBind() {
+    this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
+      TypeQueue.REPLY_QUEUE,
+      { queue: '', options: this.options.replyTo }
     );
     await this.rmqNestjsConnectService.listerReplyQueue(
       this.replyToQueue.queue,
-      this.listerReplyQueue.bind(this),
+      this.listerReplyQueue.bind(this)
     );
   }
   private async initializationCheck() {
     if (this.isInitialized) return;
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY)
     );
     await this.initializationCheck();
   }
-  private async assertReplyQueue() {
-    this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
-      TypeQueue.REPLY_QUEUE,
-      { queue: '', options: this.options.replyTo },
-    );
-  }
+
   async onModuleDestroy() {
     this.sendResponseEmitter.removeAllListeners();
   }
