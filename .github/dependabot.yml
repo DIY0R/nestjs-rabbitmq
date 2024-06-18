@@ -8,3 +8,6 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "chore"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
