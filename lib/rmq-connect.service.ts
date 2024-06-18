@@ -21,8 +21,8 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private connection: Connection = null;
   private baseChannel: Channel = null;
   private replyToChannel: Channel = null;
+
   private declared = false;
-  
   constructor(
     @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig
   ) {}
@@ -157,11 +157,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async createChannel() {
-    try {
-      return await this.connection.createChannel();
-    } catch (error) {
-      throw error;
-    }
+    return await this.connection.createChannel();
   }
   async onModuleDestroy(): Promise<void> {
     await this.baseChannel.close();
