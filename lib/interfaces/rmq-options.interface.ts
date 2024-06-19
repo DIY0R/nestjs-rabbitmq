@@ -31,7 +31,7 @@ export interface IRMQSRootAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 
 export interface IMessageBroker {
   exchange: IExchange;
-  replyTo: Options.AssertQueue;
+  replyTo?: Options.AssertQueue;
   queue?: IQueue;
   messageTimeout?: number;
   targetModuleName: string;

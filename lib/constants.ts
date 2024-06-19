@@ -8,8 +8,9 @@ export const TARGET_MODULE = 'TARGET_MODULE';
 export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;
 
-export const INDICATE_ERROR = 'Please indicate `replyToQueue';
+export const INDICATE_ERROR = 'Please indicate `replyToQueue`';
 export const TIMEOUT_ERROR = 'Response timeout error';
 export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
 export const ERROR_RMQ_SERVICE = 'Rmq service error';
-export const INOF_NOT_FULL_OPTIONS = 'Queue will not be created if there is no bind';
+export const INOF_NOT_FULL_OPTIONS =
+  'Queue will not be created if there is no bind';
