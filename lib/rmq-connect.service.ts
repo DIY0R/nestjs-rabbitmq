@@ -102,13 +102,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to send Reply Queue`);
     }
   }
-  async listerReplyQueue(
+  async listenReplyQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void
   ) {
     try {
       await this.replyToChannel.consume(queue, listenQueue, {
-        noAck: false,
+        noAck: true,
       });
     } catch (error) {
       throw new Error(`Failed to send listen Reply Queue`);

@@ -59,14 +59,32 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     this.isInitialized = true;
   }
 
+  public async notify<IMessage>(
+    topic: string,
+    message: IMessage,
+    options?: IPublishOptions
+  ) {
+    await this.initializationCheck();
+    this.rmqNestjsConnectService.publish({
+      exchange: this.options.exchange.exchange,
+      routingKey: topic,
+      content: message,
+      options: {
+        appId: this.options.serviceName,
+        timestamp: new Date().getTime(),
+        ...options,
+      },
+    });
+    return { sent: 'ok' };
+  }
   public async send<IMessage, IReply>(
     topic: string,
     message: IMessage,
     options?: IPublishOptions
   ): Promise<IReply> {
+    await this.initializationCheck();
+    if (!this.replyToQueue) return this.logger.error(INDICATE_ERROR);
     return new Promise<IReply>(async (resolve, reject) => {
-      await this.initializationCheck();
-      if (!this.replyToQueue) this.logger.error(INDICATE_ERROR);
       const correlationId = getUniqId();
       const timeout =
         options?.timeout ?? this.options.messageTimeout ?? DEFAULT_TIMEOUT;
@@ -96,17 +114,19 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     if (!message) return;
     const consumeFunction = this.rmqMessageTegs.get(message.fields.routingKey);
-    const result = consumeFunction(JSON.parse(message.content.toString()));
+    const result = await consumeFunction(
+      JSON.parse(message.content.toString())
+    );
     if (message.properties.replyTo) {
       await this.rmqNestjsConnectService.sendToReplyQueue({
         replyTo: message.properties.replyTo,
         content: result || { status: 'recived' },
         correlationId: message.properties.correlationId,
       });
-      this.rmqNestjsConnectService.ack(message);
     }
+    this.rmqNestjsConnectService.ack(message);
   }
-  private async listerReplyQueue(
+  private async listenReplyQueue(
     message: ConsumeMessage | null
   ): Promise<void> {
     if (message.properties.correlationId) {
@@ -149,9 +169,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       TypeQueue.REPLY_QUEUE,
       { queue: '', options: this.options.replyTo }
     );
-    await this.rmqNestjsConnectService.listerReplyQueue(
+    await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
-      this.listerReplyQueue.bind(this)
+      this.listenReplyQueue.bind(this)
     );
   }
   private async initializationCheck() {
