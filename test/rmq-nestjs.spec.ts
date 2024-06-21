@@ -3,10 +3,10 @@ import { Test } from '@nestjs/testing';
 import { RmqEvents } from './mocks/rmq.event.spec';
 import { RmqServieController } from './mocks/rmq.controller.spec';
 import { RmqNestjsModule, RmqService } from 'lib';
+import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
-  let apiEvents: RmqEvents;
   let rmqServieController: RmqServieController;
 
   let rmqService: RmqService;
@@ -22,14 +22,13 @@ describe('RMQe2e', () => {
           virtualHost: '/',
         }),
       ],
-      controllers: [RmqServieController, RmqEvents],
+      controllers: [RmqServieController, ConnectionMockModule],
     }).compile();
     api = apiModule.createNestApplication();
     await api.init();
 
     rmqServieController =
       apiModule.get<RmqServieController>(RmqServieController);
-    apiEvents = apiModule.get<RmqEvents>(RmqEvents);
     console.warn = jest.fn();
     console.log = jest.fn();
   });
