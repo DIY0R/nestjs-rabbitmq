@@ -1,6 +1,8 @@
 name: checker
 on:
   pull_request:
+    branches: [main, test]
+  push:
     branches: [main]
 
 jobs:
