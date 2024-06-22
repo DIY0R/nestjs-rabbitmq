@@ -1,1 +1,1 @@
-# nestjs rabbitmq bridge
+# Nestjs Rabbitmq bridge
