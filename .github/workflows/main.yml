@@ -1,16 +1,16 @@
-name: CI
+name: checker
 on:
   pull_request:
     branches: [main]
-   
+
 jobs:
-  check_commits:
+  checker:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./
 
-    environment: check_commits
+    environment: checker
     strategy:
       matrix:
         node-version: [18.x]
@@ -22,13 +22,6 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: Install dependencies
         run: npm install
-      # - name: Run tests
-      #   run: npm run test
-      - name: Lint commits
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
-          git log --pretty=format:'%s' --no-merges origin/${{ github.base_ref }}..HEAD | grep -E '^(fix|feat|docs|style|refactor|test|chore|ci):' || (echo 'Invalid commit prefix' && exit 1)
-          else
-            npx commitlint --from ${{ github.event.push.base.sha }} --to ${{ github.event.push.head.sha }} --verbose
-          fi
+
+      - name: start lint
+        run: npm run lint
