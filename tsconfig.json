@@ -19,15 +19,15 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "rmq-nestjs/rmq-nestjs": [
-        "lib/rmq-nestjs/src"
+        "lib/"
       ],
       "rmq-nestjs/rmq-nestjs/*": [
-        "lib/rmq-nestjs/src/*"
+        "lib/*"
       ]
     }
   },
   "include": [
-    "src/**/*.ts",
+    "lib/**/*.ts",
     "test/**/*.ts"
   ],
   "exclude": [

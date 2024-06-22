@@ -6,12 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import {
-  IMessageBroker,
-  IPublishOptions,
-  ImqService,
-  TypeQueue,
-} from './interfaces';
+import { IMessageBroker, IPublishOptions, TypeQueue } from './interfaces';
 import { IMetaTegsMap } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
@@ -45,7 +40,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
     @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions
+    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions,
   ) {
     this.logger = appOptions.logger
       ? appOptions.logger
@@ -62,7 +57,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public async notify<IMessage>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions
+    options?: IPublishOptions,
   ) {
     await this.initializationCheck();
     this.rmqNestjsConnectService.publish({
@@ -80,7 +75,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public async send<IMessage, IReply>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions
+    options?: IPublishOptions,
   ): Promise<IReply> {
     await this.initializationCheck();
     if (!this.replyToQueue) return this.logger.error(INDICATE_ERROR);
@@ -115,7 +110,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     if (!message) return;
     const consumeFunction = this.rmqMessageTegs.get(message.fields.routingKey);
     const result = await consumeFunction(
-      JSON.parse(message.content.toString())
+      JSON.parse(message.content.toString()),
     );
     if (message.properties.replyTo) {
       await this.rmqNestjsConnectService.sendToReplyQueue({
@@ -127,7 +122,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     this.rmqNestjsConnectService.ack(message);
   }
   private async listenReplyQueue(
-    message: ConsumeMessage | null
+    message: ConsumeMessage | null,
   ): Promise<void> {
     if (message.properties.correlationId) {
       this.sendResponseEmitter.emit(message.properties.correlationId, message);
@@ -136,7 +131,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async init() {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
-      this.options.exchange
+      this.options.exchange,
     );
     if (this.options.replyTo) await this.assertReplyQueueBind();
     await this.bindQueueExchange();
@@ -145,11 +140,11 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
         this.options.targetModuleName,
-        INOF_NOT_FULL_OPTIONS
+        INOF_NOT_FULL_OPTIONS,
       );
     const queue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.QUEUE,
-      this.options.queue
+      this.options.queue,
     );
     this.rmqMessageTegs.forEach(async (_, key) => {
       await this.rmqNestjsConnectService.bindQueue({
@@ -160,24 +155,24 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     });
     await this.rmqNestjsConnectService.listenQueue(
       this.options.queue.queue,
-      this.listenQueue.bind(this)
+      this.listenQueue.bind(this),
     );
   }
 
   private async assertReplyQueueBind() {
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
-      { queue: '', options: this.options.replyTo }
+      { queue: '', options: this.options.replyTo },
     );
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
-      this.listenReplyQueue.bind(this)
+      this.listenReplyQueue.bind(this),
     );
   }
   private async initializationCheck() {
     if (this.isInitialized) return;
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY)
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
     );
     await this.initializationCheck();
   }
