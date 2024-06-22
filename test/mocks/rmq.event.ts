@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { RMQEvent } from 'lib/decorators/rmq-message.decorator';
+import { RMQEvent } from '../../lib/decorators/rmq-message.decorator';
 
 @Injectable()
 export class RmqEvents {

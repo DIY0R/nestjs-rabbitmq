@@ -1,15 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { RmqEvents } from './mocks/rmq.event.spec';
-import { RmqServieController } from './mocks/rmq.controller.spec';
-import { RmqNestjsModule, RmqService } from 'lib';
+import { RmqServieController } from './mocks/rmq.controller';
+import { RmqNestjsModule, RmqService } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
   let rmqServieController: RmqServieController;
-
-  let rmqService: RmqService;
 
   beforeAll(async () => {
     const apiModule = await Test.createTestingModule({
@@ -18,11 +15,11 @@ describe('RMQe2e', () => {
           username: 'for-test',
           password: 'for-test',
           hostname: 'localhost',
-          port: 15672,
+          port: 5672,
           virtualHost: '/',
         }),
+        ConnectionMockModule,
       ],
-      controllers: [RmqServieController, ConnectionMockModule],
     }).compile();
     api = apiModule.createNestApplication();
     await api.init();
@@ -33,7 +30,12 @@ describe('RMQe2e', () => {
     console.log = jest.fn();
   });
 
-  describe('rpc', () => {});
+  describe('rpc', () => {
+    it('successful send()', async () => {
+      const { message } = await rmqServieController.sendHi();
+      expect(message).toBe('hi');
+    });
+  });
 
   afterAll(async () => {
     await delay(500);

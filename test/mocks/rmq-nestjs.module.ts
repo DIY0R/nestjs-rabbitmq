@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { RmqNestjsModule } from 'lib';
-import { RmqEvents } from './rmq.event.spec';
+import { RmqNestjsModule, RmqService } from '../../lib';
+import { RmqEvents } from './rmq.event';
+import { RmqServieController } from './rmq.controller';
 
 @Module({
   imports: [
@@ -10,12 +11,13 @@ import { RmqEvents } from './rmq.event.spec';
         type: 'topic',
         options: { durable: true },
       },
-      queue: { queue: 'user', options: { durable: true } },
+      queue: { queue: 'test-for', options: { durable: true } },
 
-      replyTo: { exclusive: true },
+      replyTo: { durable: true },
       targetModuleName: 'ConnectionMockModule',
     }),
-    RmqEvents,
   ],
+  providers: [RmqEvents, RmqServieController],
+  exports: [RmqServieController],
 })
 export class ConnectionMockModule {}

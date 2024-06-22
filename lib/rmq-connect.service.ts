@@ -24,7 +24,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
 
   private declared = false;
   constructor(
-    @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig
+    @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig,
   ) {}
   async onModuleInit(): Promise<void> {
     if (this.declared) throw Error('Root RmqNestjsModule already declared!');
@@ -34,18 +34,18 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
 
   public async assertExchange(
-    options: IExchange
+    options: IExchange,
   ): Promise<Replies.AssertExchange> {
     try {
       const exchange = await this.baseChannel.assertExchange(
         options.exchange,
         options.type,
-        options.options
+        options.options,
       );
       return exchange;
     } catch (error) {
       throw new Error(
-        `Failed to assert exchange '${options.exchange}': ${error.message}`
+        `Failed to assert exchange '${options.exchange}': ${error.message}`,
       );
     }
   }
@@ -56,19 +56,19 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   public async assertQueue(
     typeQueue: TypeQueue,
-    options: IQueue
+    options: IQueue,
   ): Promise<Replies.AssertQueue> {
     try {
       if (typeQueue == TypeQueue.QUEUE) {
         const queue = await this.baseChannel.assertQueue(
           options.queue,
-          options.options
+          options.options,
         );
         return queue;
       }
       const queue = await this.replyToChannel.assertQueue(
         options.queue || '',
-        options.options
+        options.options,
       );
       return queue;
     } catch (error) {
@@ -81,11 +81,11 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         bindQueue.queue,
         bindQueue.source,
         bindQueue.pattern,
-        bindQueue.args
+        bindQueue.args,
       );
     } catch (error) {
       throw new Error(
-        `Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`
+        `Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`,
       );
     }
   }
@@ -96,7 +96,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         Buffer.from(JSON.stringify(sendToQueueOptions.content)),
         {
           correlationId: sendToQueueOptions.correlationId,
-        }
+        },
       );
     } catch (error) {
       throw new Error(`Failed to send Reply Queue`);
@@ -104,7 +104,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   async listenReplyQueue(
     queue: string,
-    listenQueue: (msg: ConsumeMessage | null) => void
+    listenQueue: (msg: ConsumeMessage | null) => void,
   ) {
     try {
       await this.replyToChannel.consume(queue, listenQueue, {
@@ -116,7 +116,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   async listenQueue(
     queue: string,
-    listenQueue: (msg: ConsumeMessage | null) => void
+    listenQueue: (msg: ConsumeMessage | null) => void,
   ): Promise<void> {
     try {
       await this.baseChannel.consume(queue, listenQueue, {
@@ -136,7 +136,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         {
           replyTo: sendMessage.options.replyTo,
           correlationId: sendMessage.options.correlationId,
-        }
+        },
       );
     } catch (error) {
       throw new Error(`Failed to send message ${error}`);
