@@ -5,9 +5,9 @@ import {
   IRMQSRootAsyncOptions,
   IRabbitMQConfig,
 } from './interfaces';
-import { RMQ_BROKER_OPTIONS, TARGET_MODULE } from './constants';
+import { MODULE_TOKEN, RMQ_BROKER_OPTIONS, TARGET_MODULE } from './constants';
 import { DiscoveryModule } from '@nestjs/core';
-import { MetaTegsScannerService } from './common';
+import { MetaTegsScannerService, getUniqId } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
 import { IAppOptions } from './interfaces/app-options.interface';
 
@@ -37,11 +37,11 @@ export class RmqNestjsModule {
       imports: [DiscoveryModule],
       providers: [
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
-        { provide: TARGET_MODULE, useValue: options.targetModuleName },
+        { provide: MODULE_TOKEN, useFactory: getUniqId },
         RmqService,
         MetaTegsScannerService,
       ],
-      exports: [RmqService, MetaTegsScannerService],
+      exports: [RmqService, MetaTegsScannerService, MODULE_TOKEN],
     };
   }
 }

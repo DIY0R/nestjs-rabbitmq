@@ -34,7 +34,6 @@ export interface IMessageBroker {
   replyTo?: Options.AssertQueue;
   queue?: IQueue;
   messageTimeout?: number;
-  targetModuleName: string;
   serviceName?: string;
 }
 export interface IBindQueue {

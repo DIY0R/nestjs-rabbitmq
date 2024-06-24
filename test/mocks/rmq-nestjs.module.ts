@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RmqNestjsModule, RmqService } from '../../lib';
+import { RmqNestjsModule } from '../../lib';
 import { RmqEvents } from './rmq.event';
 import { RmqServieController } from './rmq.controller';
 
@@ -12,9 +12,7 @@ import { RmqServieController } from './rmq.controller';
         options: { durable: true },
       },
       queue: { queue: 'test-for', options: { durable: true } },
-
       replyTo: { durable: true },
-      targetModuleName: 'ConnectionMockModule',
     }),
   ],
   providers: [RmqEvents, RmqServieController],

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { RMQEvent } from '../../lib/decorators/rmq-message.decorator';
+import { MessageRoute } from '../../lib/decorators/rmq-message.decorator';
 
 @Injectable()
 export class RmqEvents {
-  @RMQEvent('hi')
+  @MessageRoute('hi')
   hi() {
     return { message: 'hi' };
   }
