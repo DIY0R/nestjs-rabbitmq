@@ -1,7 +1,6 @@
 import { DynamicModule, Module, Global } from '@nestjs/common';
 import { RMQ_APP_OPTIONS, RMQ_CONNECT_OPTIONS } from './constants';
 import { IRMQSRootAsyncOptions, IRabbitMQConfig } from './interfaces';
-
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { IAppOptions } from './interfaces/app-options.interface';
 
