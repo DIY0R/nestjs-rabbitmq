@@ -5,10 +5,10 @@ import { RmqService } from '../../lib';
 export class RmqServieController {
   constructor(private readonly rmqServie: RmqService) {}
 
-  async sendHi() {
-    const sendhi = await this.rmqServie.send<object, { message: 'hi' }>(
-      'hi',
-      {},
+  async sendHi(obj: any) {
+    const sendhi = await this.rmqServie.send<object, { message: object }>(
+      'text.text',
+      obj,
     );
     return sendhi;
   }
