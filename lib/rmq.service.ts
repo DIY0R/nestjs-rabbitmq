@@ -35,13 +35,14 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   private replyToQueue: Replies.AssertQueue = null;
   private exchange: Replies.AssertExchange = null;
   private isInitialized: boolean = false;
+  private connected = false;
   private logger: LoggerService;
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
     @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
     @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions,
-    @Inject(MODULE_TOKEN) private readonly moduleToken: string
+    @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
     this.logger = appOptions.logger
       ? appOptions.logger
@@ -51,16 +52,18 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.rmqMessageTegs = this.metaTegsScannerService.scan(
       RMQ_MESSAGE_META_TEG,
-      this.moduleToken
+      this.moduleToken,
     );
     await this.init();
     this.isInitialized = true;
   }
-
+  public healthCheck() {
+    return this.rmqNestjsConnectService.isConnected;
+  }
   public async notify<IMessage>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions
+    options?: IPublishOptions,
   ) {
     await this.initializationCheck();
     this.rmqNestjsConnectService.publish({
@@ -78,7 +81,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public async send<IMessage, IReply>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions
+    options?: IPublishOptions,
   ): Promise<IReply> {
     await this.initializationCheck();
     if (!this.replyToQueue) return this.logger.error(INDICATE_ERROR);
@@ -113,7 +116,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     const consumeFunction = this.rmqMessageTegs.get(message.fields.routingKey);
     if (!consumeFunction) return;
     const result = await consumeFunction(
-      JSON.parse(message.content.toString())
+      JSON.parse(message.content.toString()),
     );
     if (message.properties.replyTo) {
       await this.rmqNestjsConnectService.sendToReplyQueue({
@@ -125,7 +128,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     this.rmqNestjsConnectService.ack(message);
   }
   private async listenReplyQueue(
-    message: ConsumeMessage | null
+    message: ConsumeMessage | null,
   ): Promise<void> {
     if (message.properties.correlationId) {
       this.sendResponseEmitter.emit(message.properties.correlationId, message);
@@ -134,7 +137,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async init() {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
-      this.options.exchange
+      this.options.exchange,
     );
     if (this.options.replyTo) await this.assertReplyQueueBind();
     await this.bindQueueExchange();
@@ -143,11 +146,11 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
         INOF_NOT_FULL_OPTIONS,
-        this.options.exchange.exchange
+        this.options.exchange.exchange,
       );
     const queue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.QUEUE,
-      this.options.queue
+      this.options.queue,
     );
     this.rmqMessageTegs.forEach(async (_, key) => {
       await this.rmqNestjsConnectService.bindQueue({
@@ -158,24 +161,24 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     });
     await this.rmqNestjsConnectService.listenQueue(
       this.options.queue.queue,
-      this.listenQueue.bind(this)
+      this.listenQueue.bind(this),
     );
   }
 
   private async assertReplyQueueBind() {
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
-      { queue: '', options: this.options.replyTo }
+      { queue: '', options: this.options.replyTo },
     );
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
-      this.listenReplyQueue.bind(this)
+      this.listenReplyQueue.bind(this),
     );
   }
   private async initializationCheck() {
     if (this.isInitialized) return;
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY)
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
     );
     await this.initializationCheck();
   }

@@ -16,3 +16,11 @@ export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
 export const ERROR_RMQ_SERVICE = 'Rmq service error';
 export const INOF_NOT_FULL_OPTIONS =
   'Queue will not be created if there is no bind';
+
+export const CLOSE_MESSAGE = 'Disconnected from RMQ. Trying to reconnect';
+export const CONNECT_FAILED_MESSAGE = 'Failed to connect to RMQ';
+export const WRONG_CREDENTIALS_MESSAGE = 'Wrong credentials for RMQ';
+export const CONNECT_BLOCKED_MESSAGE = 'Connection blocked';
+export const CLOSE_EVENT = 'close';
+export const CONNECT_ERROR = 'error';
+export const CONNECT_BLOCKED = 'blocked';
