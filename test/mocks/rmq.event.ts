@@ -3,8 +3,8 @@ import { MessageRoute } from '../../lib/decorators/rmq-message.decorator';
 
 @Injectable()
 export class RmqEvents {
-  @MessageRoute('hi')
-  hi() {
-    return { message: 'hi' };
+  @MessageRoute('text.text')
+  recived(obj: any) {
+    return { message: obj };
   }
 }

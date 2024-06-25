@@ -16,6 +16,6 @@ import { RmqServieController } from './rmq.controller';
     }),
   ],
   providers: [RmqEvents, RmqServieController],
-  exports: [RmqServieController],
+  exports: [RmqServieController, RmqNestjsModule],
 })
 export class ConnectionMockModule {}

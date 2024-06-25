@@ -7,7 +7,7 @@ import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 describe('RMQe2e', () => {
   let api: INestApplication;
   let rmqServieController: RmqServieController;
-
+  let rmqService: RmqService;
   beforeAll(async () => {
     const apiModule = await Test.createTestingModule({
       imports: [
@@ -26,14 +26,25 @@ describe('RMQe2e', () => {
 
     rmqServieController =
       apiModule.get<RmqServieController>(RmqServieController);
+    rmqService = apiModule.get(RmqService);
     console.warn = jest.fn();
     console.log = jest.fn();
   });
 
   describe('rpc', () => {
+    it('check connection', async () => {
+      const isConnected = rmqService.healthCheck();
+      expect(isConnected).toBe(true);
+    });
     it('successful send()', async () => {
-      const { message } = await rmqServieController.sendHi();
-      expect(message).toBe('hi');
+      const obj = { time: '001', fulled: 12 };
+      const { message } = await rmqServieController.sendHi(obj);
+      expect(message).toEqual(obj);
+    });
+    it('filed send()', async () => {
+      const obj = { time: '001', fulled: 12 };
+      const { message } = await rmqServieController.sendHi(obj);
+      expect(message).not.toEqual({});
     });
   });
 
