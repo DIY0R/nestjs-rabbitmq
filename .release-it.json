@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+  "git": {
+    "commitMessage": "chore: release v${version}"
+  },
+  "npm":{
+    "release": true
+  },
+  "github": {
+    "release": true
+  },
+  "hooks": {
+    "before:init":["git pull","npm run build"],
+    "after:bump":"npx auto-changelog -p"
+  }
+}
