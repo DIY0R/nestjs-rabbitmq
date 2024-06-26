@@ -68,5 +68,8 @@
   "homepage": "https://github.com/DIY0R/nestjs-rabbitmq-bridge",
   "bugs": {
     "url": "https://github.com/DIY0R/nestjs-rabbitmq-bridge/issues"
+  },
+  "npm": {
+    "publish": true
   }
 }
