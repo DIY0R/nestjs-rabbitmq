@@ -15,7 +15,7 @@ import { IAppOptions } from './interfaces/app-options.interface';
 export class RmqNestjsModule {
   static forRoot(
     options: IRabbitMQConfig,
-    appOptions?: IAppOptions
+    appOptions?: IAppOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsModule,
@@ -24,7 +24,7 @@ export class RmqNestjsModule {
   }
   static forRootAsync(
     options: IRMQSRootAsyncOptions,
-    appOptions?: IAppOptions
+    appOptions?: IAppOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsModule,
@@ -41,7 +41,7 @@ export class RmqNestjsModule {
         RmqService,
         MetaTegsScannerService,
       ],
-      exports: [RmqService, MetaTegsScannerService, MODULE_TOKEN],
+      exports: [RmqService],
     };
   }
 }
