@@ -1,6 +1,6 @@
 {
   "name": "nestjs-rabbitmq-bridge",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Nestjs rabbitMQ module",
   "author": "Sobirov Diyorbek <sobirovdiyorkind@gmail.com>",
   "private": false,
