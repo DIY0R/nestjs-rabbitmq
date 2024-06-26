@@ -17,19 +17,10 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "paths": {
-      "rmq-nestjs/rmq-nestjs": [
-        "lib/"
-      ],
-      "rmq-nestjs/rmq-nestjs/*": [
-        "lib/*"
-      ]
-    }
   },
   "include": [
-    "lib/**/*.ts",
-    "test/**/*.ts",
-    "*/"
+    "lib/**/*",
+    "test/**/*"
   ],
   "exclude": [
     "node_modules"
