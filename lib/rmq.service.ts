@@ -9,6 +9,7 @@ import { IMessageBroker, IPublishOptions, TypeQueue } from './interfaces';
 import { IMetaTegsMap } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
+  ERROR_NO_ROUTE,
   INDICATE_ERROR,
   INITIALIZATION_STEP_DELAY,
   INOF_NOT_FULL_OPTIONS,
@@ -114,10 +115,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     const consumeFunction = this.rmqMessageTegs.get(message.fields.routingKey);
-    if (!consumeFunction) return;
-    const result = await consumeFunction(
-      JSON.parse(message.content.toString()),
-    );
+    let result = { error: ERROR_NO_ROUTE };
+    if (consumeFunction)
+      result = await consumeFunction(JSON.parse(message.content.toString()));
     if (message.properties.replyTo) {
       await this.rmqNestjsConnectService.sendToReplyQueue({
         replyTo: message.properties.replyTo,
