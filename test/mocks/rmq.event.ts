@@ -7,4 +7,12 @@ export class RmqEvents {
   recived(obj: any) {
     return { message: obj };
   }
+  @MessageRoute('*.*.rpc')
+  recivedTopic(obj: any) {
+    return { message: obj };
+  }
+  @MessageRoute('rpc.#')
+  recivedTopicPattern(obj: any) {
+    return { message: obj };
+  }
 }

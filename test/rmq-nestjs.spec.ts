@@ -39,13 +39,26 @@ describe('RMQe2e', () => {
     });
     it('successful send()', async () => {
       const obj = { time: '001', fulled: 12 };
-      const { message } = await rmqServieController.sendMessage(obj);
+      const topic = 'text.text';
+      const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
     it('cant find route', async () => {
       const obj = { time: 1 };
       const message = await rmqServieController.sendNonRoute(obj);
       expect(message).toEqual({ error: ERROR_NO_ROUTE });
+    });
+    it('send topic patern #1 "*"', async () => {
+      const obj = { time: 1 };
+      const topic = 'message.text.rpc';
+      const { message } = await rmqServieController.sendMessage(obj, topic);
+      expect(message).toEqual(obj);
+    });
+    it('send topic patern #2 "#"', async () => {
+      const obj = { time: 1 };
+      const topic = 'rpc.text.text';
+      const { message } = await rmqServieController.sendMessage(obj, topic);
+      expect(message).toEqual(obj);
     });
   });
 

@@ -5,9 +5,9 @@ import { RmqService } from '../../lib';
 export class RmqServieController {
   constructor(private readonly rmqServie: RmqService) {}
 
-  async sendMessage(obj: any) {
+  async sendMessage(obj: any, topic: string = 'text.text') {
     const sendhi = await this.rmqServie.send<object, { message: object }>(
-      'text.text',
+      topic,
       obj,
     );
     return sendhi;
@@ -18,7 +18,6 @@ export class RmqServieController {
       'text.text.text',
       obj,
     );
-
     return message;
   }
 }
