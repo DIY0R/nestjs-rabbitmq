@@ -1,1 +1,1 @@
-export type IMetaTegsMap = Map<string | symbol, (...args: any[]) => any>;
+export type IMetaTegsMap = Map<string, (...args: any[]) => any>;

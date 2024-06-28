@@ -79,6 +79,13 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     });
     return { sent: 'ok' };
   }
+  private async init() {
+    this.exchange = await this.rmqNestjsConnectService.assertExchange(
+      this.options.exchange,
+    );
+    if (this.options.replyTo) await this.assertReplyQueueBind();
+    await this.bindQueueExchange();
+  }
   public async send<IMessage, IReply>(
     topic: string,
     message: IMessage,
@@ -114,7 +121,8 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     });
   }
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
-    const consumeFunction = this.rmqMessageTegs.get(message.fields.routingKey);
+    const route = this.getRouteByTopic(message.fields.routingKey);
+    const consumeFunction = this.rmqMessageTegs.get(route);
     let result = { error: ERROR_NO_ROUTE };
     if (consumeFunction)
       result = await consumeFunction(JSON.parse(message.content.toString()));
@@ -135,13 +143,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async init() {
-    this.exchange = await this.rmqNestjsConnectService.assertExchange(
-      this.options.exchange,
-    );
-    if (this.options.replyTo) await this.assertReplyQueueBind();
-    await this.bindQueueExchange();
-  }
   private async bindQueueExchange() {
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
@@ -182,7 +183,15 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     );
     await this.initializationCheck();
   }
-
+  private getRouteByTopic(topic: string): string {
+    for (const route of this.rmqMessageTegs.keys()) {
+      if (route === topic) return route;
+      const regexString =
+        '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+.?)+') + '$';
+      if (topic.search(regexString) !== -1) return route;
+    }
+    return '';
+  }
   async onModuleDestroy() {
     this.sendResponseEmitter.removeAllListeners();
   }
