@@ -12,13 +12,24 @@ describe('RMQe2e', () => {
   beforeAll(async () => {
     const apiModule = await Test.createTestingModule({
       imports: [
-        RmqNestjsModule.forRoot({
-          username: 'for-test',
-          password: 'for-test',
-          hostname: 'localhost',
-          port: 5672,
-          virtualHost: '/',
-        }),
+        RmqNestjsModule.forRoot(
+          {
+            username: 'for-test',
+            password: 'for-test',
+            hostname: 'localhost',
+            port: 5672,
+            virtualHost: '/',
+          },
+          {
+            globalBroker: {
+              replyTo: {
+                queue: 'RmqNestjsModuleGlobalQueue',
+                options: { exclusive: true },
+              },
+            },
+            appOptions: undefined,
+          },
+        ),
         ConnectionMockModule,
       ],
     }).compile();
@@ -31,11 +42,15 @@ describe('RMQe2e', () => {
     console.warn = jest.fn();
     console.log = jest.fn();
   });
-
+  test('check connection', async () => {
+    const isConnected = rmqService.healthCheck();
+    expect(isConnected).toBe(true);
+  });
   describe('rpc', () => {
-    it('check connection', async () => {
-      const isConnected = rmqService.healthCheck();
-      expect(isConnected).toBe(true);
+    it('successful global send()', async () => {
+      const obj = { time: '001', fulled: 12 };
+      const { message } = await rmqServieController.sendGlobalRoute(obj);
+      expect(message).toEqual(obj);
     });
     it('successful send()', async () => {
       const obj = { time: '001', fulled: 12 };
