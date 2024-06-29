@@ -6,6 +6,5 @@ export interface IAppOptions {
   globalMiddleware?: (typeof RMQPipeClass)[];
   globalIntercepters?: (typeof RMQIntercepterClass)[];
   errorHandler?: object;
-  serviceName?: string;
   logMessages: boolean;
 }

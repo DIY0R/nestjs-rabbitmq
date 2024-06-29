@@ -24,7 +24,7 @@ export interface IRabbitMQConfig {
   virtualHost: string;
 }
 
-export interface IRMQSRootAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
+export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (...args: any[]) => Promise<IRabbitMQConfig> | IRabbitMQConfig;
   inject?: any[];
 }

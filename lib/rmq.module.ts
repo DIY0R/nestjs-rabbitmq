@@ -2,7 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import {
   IMessageBroker,
-  IRMQSRootAsyncOptions,
+  IRabbitMQConfigAsync,
   IRabbitMQConfig,
 } from './interfaces';
 import { MODULE_TOKEN, RMQ_BROKER_OPTIONS, TARGET_MODULE } from './constants';
@@ -23,7 +23,7 @@ export class RmqNestjsModule {
     };
   }
   static forRootAsync(
-    options: IRMQSRootAsyncOptions,
+    options: IRabbitMQConfigAsync,
     appOptions?: IAppOptions,
   ): DynamicModule {
     return {
