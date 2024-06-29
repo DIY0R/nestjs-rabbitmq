@@ -25,7 +25,7 @@ import {
   RMQ_MESSAGE_META_TEG,
   TIMEOUT_ERROR,
 } from './constants';
-import { ConsumeMessage, Message, Replies } from 'amqplib';
+import { ConsumeMessage, Message, Replies, Channel } from 'amqplib';
 import { MetaTegsScannerService } from './common';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
@@ -87,7 +87,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
       this.options.exchange,
     );
-    if (this.options.replyTo) await this.assertReplyQueueBind();
+    if (this.options.replyTo) await this.assertReplyQueue();
     await this.bindQueueExchange();
   }
   public async send<IMessage, IReply>(
@@ -137,8 +137,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         correlationId: message.properties.correlationId,
       });
     }
-    this.rmqNestjsConnectService.ack(message);
+    this.ack(message);
   }
+
   private async listenReplyQueue(
     message: ConsumeMessage | null,
   ): Promise<void> {
@@ -148,6 +149,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async bindQueueExchange() {
+    const { queue: queueName, consumOptions } = this.options.queue;
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
         INOF_NOT_FULL_OPTIONS,
@@ -165,20 +167,28 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       });
     });
     await this.rmqNestjsConnectService.listenQueue(
-      this.options.queue.queue,
+      queueName,
       this.listenQueue.bind(this),
+      consumOptions,
     );
   }
 
-  private async assertReplyQueueBind() {
+  private async assertReplyQueue() {
+    const { queue, options, consumOptions } = this.options.replyTo;
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
-      { queue: '', options: this.options.replyTo },
+      { queue, options },
     );
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
       this.listenReplyQueue.bind(this),
+      consumOptions,
     );
+  }
+  public ack(
+    ...params: Parameters<Channel['ack']>
+  ): ReturnType<Channel['ack']> {
+    return this.rmqNestjsConnectService.ack(...params);
   }
   private async initializationCheck() {
     if (this.isInitialized) return;

@@ -5,6 +5,7 @@ import { RMQIntercepterClass, RMQPipeClass } from 'lib/common';
 export interface IQueue {
   queue: string;
   options?: Options.AssertQueue;
+  consumOptions?: Options.Consume;
 }
 export enum TypeQueue {
   QUEUE,
@@ -32,7 +33,7 @@ export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
 
 export interface IMessageBroker {
   exchange: IExchange;
-  replyTo?: Options.AssertQueue;
+  replyTo?: IQueue;
   queue?: IQueue;
   messageTimeout?: number;
   serviceName?: string;

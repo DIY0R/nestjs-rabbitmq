@@ -12,7 +12,11 @@ import { RmqServieController } from './rmq.controller';
         options: { durable: true },
       },
       queue: { queue: 'test-for', options: { durable: true } },
-      replyTo: { durable: true },
+      replyTo: {
+        queue: '',
+        options: { durable: true },
+        consumOptions: { noAck: false },
+      },
     }),
   ],
   providers: [RmqEvents, RmqServieController],

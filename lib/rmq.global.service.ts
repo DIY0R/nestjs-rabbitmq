@@ -1,4 +1,4 @@
-import { ConsumeMessage, Message, Replies } from 'amqplib';
+import { ConsumeMessage, Message, Replies, Channel } from 'amqplib';
 import { IGlobalOptions, IPublishOptions, TypeQueue } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { DEFAULT_TIMEOUT, RMQ_APP_OPTIONS, TIMEOUT_ERROR } from './constants';
@@ -44,6 +44,11 @@ export class RmqGlobalService {
         },
       });
     });
+  }
+  public ack(
+    ...params: Parameters<Channel['ack']>
+  ): ReturnType<Channel['ack']> {
+    return this.rmqNestjsConnectService.ack(...params);
   }
   private async listenReplyQueue(
     message: ConsumeMessage | null,

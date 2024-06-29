@@ -25,7 +25,14 @@ import {
   ISendToReplyQueueOptions,
   IGlobalOptions,
 } from './interfaces';
-import { Channel, Connection, ConsumeMessage, Replies, connect } from 'amqplib';
+import {
+  Channel,
+  Connection,
+  ConsumeMessage,
+  Options,
+  Replies,
+  connect,
+} from 'amqplib';
 import { RQMColorLogger } from './common/logger';
 
 @Injectable()
@@ -77,18 +84,15 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     options?: IQueue,
   ): Promise<Replies.AssertQueue> {
     try {
-      if (typeQueue == TypeQueue.QUEUE) {
-        const queue = await this.baseChannel.assertQueue(
+      if (typeQueue == TypeQueue.QUEUE)
+        return await this.baseChannel.assertQueue(
           options.queue,
           options.options,
         );
-        return queue;
-      }
-      const queue = await this.replyToChannel.assertQueue(
-        options.queue || '',
+      return await this.replyToChannel.assertQueue(
+        options.queue,
         options.options,
       );
-      return queue;
     } catch (error) {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error.message}`);
     }
@@ -123,11 +127,16 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   async listenReplyQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
+    consumOptions?: Options.Consume,
   ) {
     try {
-      await this.replyToChannel.consume(queue, listenQueue, {
-        noAck: true,
-      });
+      await this.replyToChannel.consume(
+        queue,
+        listenQueue,
+        consumOptions || {
+          noAck: true,
+        },
+      );
     } catch (error) {
       throw new Error(`Failed to send listen Reply Queue`);
     }
@@ -135,11 +144,16 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   async listenQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
+    consumOptions?: Options.Consume,
   ): Promise<void> {
     try {
-      await this.baseChannel.consume(queue, listenQueue, {
-        noAck: false,
-      });
+      await this.baseChannel.consume(
+        queue,
+        listenQueue,
+        consumOptions || {
+          noAck: false,
+        },
+      );
     } catch (error) {
       throw new Error(`Failed to listen Queue`);
     }
