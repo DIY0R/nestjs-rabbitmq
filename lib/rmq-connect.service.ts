@@ -14,7 +14,6 @@ import {
   CONNECT_FAILED_MESSAGE,
   RMQ_APP_OPTIONS,
   RMQ_CONNECT_OPTIONS,
-  WRONG_CREDENTIALS_MESSAGE,
 } from './constants';
 import {
   IRabbitMQConfig,
@@ -24,9 +23,9 @@ import {
   IBindQueue,
   ISendMessage,
   ISendToReplyQueueOptions,
+  IGlobalOptions,
 } from './interfaces';
 import { Channel, Connection, ConsumeMessage, Replies, connect } from 'amqplib';
-import { IAppOptions } from './interfaces/app-options.interface';
 import { RQMColorLogger } from './common/logger';
 
 @Injectable()
@@ -39,11 +38,11 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private declared = false;
   constructor(
     @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig,
-    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions,
+    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
   ) {
-    this.logger = appOptions.logger
-      ? appOptions.logger
-      : new RQMColorLogger(this.appOptions.logMessages);
+    this.logger = globalOptions.appOptions?.logger
+      ? globalOptions.appOptions?.logger
+      : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
   }
   async onModuleInit(): Promise<void> {
     if (this.declared) throw Error('Root RmqNestjsModule already declared!');
@@ -75,7 +74,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   public async assertQueue(
     typeQueue: TypeQueue,
-    options: IQueue,
+    options?: IQueue,
   ): Promise<Replies.AssertQueue> {
     try {
       if (typeQueue == TypeQueue.QUEUE) {

@@ -5,7 +5,12 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { IMessageBroker, IPublishOptions, TypeQueue } from './interfaces';
+import {
+  IGlobalOptions,
+  IMessageBroker,
+  IPublishOptions,
+  TypeQueue,
+} from './interfaces';
 import { IMetaTegsMap } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
@@ -25,7 +30,6 @@ import { MetaTegsScannerService } from './common';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
-import { IAppOptions } from './interfaces/app-options.interface';
 import { RQMColorLogger } from './common/logger';
 
 @Injectable()
@@ -42,12 +46,12 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
     @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private appOptions: IAppOptions,
+    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
-    this.logger = appOptions.logger
-      ? appOptions.logger
-      : new RQMColorLogger(this.appOptions.logMessages);
+    this.logger = globalOptions.appOptions?.logger
+      ? globalOptions.appOptions?.logger
+      : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
   }
 
   async onModuleInit() {

@@ -1,5 +1,6 @@
 import { Options } from 'amqplib';
-import { ModuleMetadata } from '@nestjs/common';
+import { LoggerService, ModuleMetadata } from '@nestjs/common';
+import { RMQIntercepterClass, RMQPipeClass } from 'lib/common';
 
 export interface IQueue {
   queue: string;
@@ -58,4 +59,21 @@ export interface ISendToReplyQueueOptions {
   content: Record<string, any>;
   correlationId: string;
   options?: Options.Publish;
+}
+export interface IAppOptions {
+  logger?: LoggerService;
+  globalMiddleware?: (typeof RMQPipeClass)[];
+  globalIntercepters?: (typeof RMQIntercepterClass)[];
+  errorHandler?: object;
+  logMessages: boolean;
+}
+export interface IGlobalBroker {
+  replyTo: IQueue;
+  messageTimeout?: number;
+  serviceName?: string;
+}
+
+export interface IGlobalOptions {
+  globalBroker?: IGlobalBroker;
+  appOptions?: IAppOptions;
 }

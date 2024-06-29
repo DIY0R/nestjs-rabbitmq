@@ -1,44 +1,51 @@
 import { DynamicModule, Module, Global } from '@nestjs/common';
 import { RMQ_APP_OPTIONS, RMQ_CONNECT_OPTIONS } from './constants';
-import { IRabbitMQConfigAsync, IRabbitMQConfig } from './interfaces';
+import {
+  IRabbitMQConfigAsync,
+  IRabbitMQConfig,
+  IGlobalBroker,
+  IGlobalOptions,
+} from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
-import { IAppOptions } from './interfaces/app-options.interface';
+import { RmqGlobalService } from './rmq.global.service';
 
 @Global()
 @Module({})
 export class RmqNestjsCoreModule {
   static forRoot(
-    options: IRabbitMQConfig,
-    appOptions?: IAppOptions,
+    configOptions: IRabbitMQConfig,
+    globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
       providers: [
-        { provide: RMQ_CONNECT_OPTIONS, useValue: options },
-        { provide: RMQ_APP_OPTIONS, useValue: appOptions || {} },
+        { provide: RMQ_CONNECT_OPTIONS, useValue: configOptions },
+        { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
         RmqNestjsConnectService,
+        RmqGlobalService,
       ],
-      exports: [RmqNestjsConnectService, RMQ_APP_OPTIONS],
+      exports: [RmqNestjsConnectService, RmqGlobalService, RMQ_APP_OPTIONS],
     };
   }
   static forRootAsync(
-    options: IRabbitMQConfigAsync,
-    appOptions?: IAppOptions,
+    configOptions: IRabbitMQConfigAsync,
+    globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
-      imports: options.imports,
+      imports: configOptions.imports,
       providers: [
         {
           provide: RMQ_CONNECT_OPTIONS,
           useFactory: async (...args: any[]) =>
-            await options.useFactory(...args),
-          inject: options.inject || [],
+            await configOptions.useFactory(...args),
+          inject: configOptions.inject || [],
         },
-        { provide: RMQ_APP_OPTIONS, useValue: appOptions || {} },
+        { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
         RmqNestjsConnectService,
+        RmqGlobalService,
       ],
-      exports: [RmqNestjsConnectService, RMQ_APP_OPTIONS],
+      exports: [RmqNestjsConnectService, RmqGlobalService, RMQ_APP_OPTIONS],
     };
   }
 }

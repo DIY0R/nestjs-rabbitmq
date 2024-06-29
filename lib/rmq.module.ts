@@ -4,31 +4,32 @@ import {
   IMessageBroker,
   IRabbitMQConfigAsync,
   IRabbitMQConfig,
+  IGlobalBroker,
+  IGlobalOptions,
 } from './interfaces';
 import { MODULE_TOKEN, RMQ_BROKER_OPTIONS, TARGET_MODULE } from './constants';
 import { DiscoveryModule } from '@nestjs/core';
 import { MetaTegsScannerService, getUniqId } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
-import { IAppOptions } from './interfaces/app-options.interface';
 
 @Module({})
 export class RmqNestjsModule {
   static forRoot(
-    options: IRabbitMQConfig,
-    appOptions?: IAppOptions,
+    configOptions: IRabbitMQConfig,
+    globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsModule,
-      imports: [RmqNestjsCoreModule.forRoot(options, appOptions)],
+      imports: [RmqNestjsCoreModule.forRoot(configOptions, globalOptions)],
     };
   }
   static forRootAsync(
-    options: IRabbitMQConfigAsync,
-    appOptions?: IAppOptions,
+    configOptions: IRabbitMQConfigAsync,
+    globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
       module: RmqNestjsModule,
-      imports: [RmqNestjsCoreModule.forRootAsync(options, appOptions)],
+      imports: [RmqNestjsCoreModule.forRootAsync(configOptions, globalOptions)],
     };
   }
   static forFeature(options: IMessageBroker): DynamicModule {
