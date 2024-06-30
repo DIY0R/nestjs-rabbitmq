@@ -23,11 +23,13 @@ describe('RMQe2e', () => {
           {
             globalBroker: {
               replyTo: {
-                queue: 'RmqNestjsModuleGlobalQueue',
+                queue: 'RmqNestj1111sModuleGlobalQueue',
                 options: { exclusive: true },
+                consumOptions: { noAck: false },
               },
+              messageTimeout: 50000,
+              serviceName: 'global srvice',
             },
-            appOptions: undefined,
           },
         ),
         ConnectionMockModule,
@@ -51,6 +53,11 @@ describe('RMQe2e', () => {
       const obj = { time: '001', fulled: 12 };
       const { message } = await rmqServieController.sendGlobalRoute(obj);
       expect(message).toEqual(obj);
+    });
+    it('successful global notify()', async () => {
+      const obj = { time: '001', fulled: 12 };
+      const response = rmqServieController.sendNotify(obj);
+      expect(response).toEqual({ status: 'ok' });
     });
     it('successful send()', async () => {
       const obj = { time: '001', fulled: 12 };

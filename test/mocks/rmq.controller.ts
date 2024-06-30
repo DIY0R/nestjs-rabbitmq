@@ -24,14 +24,21 @@ export class RmqServieController {
     return message;
   }
   async sendGlobalRoute(obj: any) {
+    console.log('----sendGlobalRoutesendGlobalRoutesendGlobalRoute-->');
     const message = await this.rmqGlobalService.send<
       object,
       { message: object }
     >('for-test', 'rpc.global', obj);
+
     return message;
   }
-  @MessageRoute('rpc.global')
-  recivedTopicPattern(obj: any) {
-    return { message: obj };
+
+  sendNotify(obj: any) {
+    const message = this.rmqGlobalService.notify<object>(
+      'for-test',
+      'rpc.notify',
+      obj,
+    );
+    return message;
   }
 }
