@@ -10,7 +10,7 @@ export const DEFAULT_TIMEOUT = 40000;
 export const MESSAGE_ROUTER = 'MessageRouterExplorer';
 export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 
-export const INDICATE_ERROR = 'Please indicate `replyToQueue`';
+export const INDICATE_REPLY_QUEUE = 'Please indicate `replyToQueue`';
 export const TIMEOUT_ERROR = 'Response timeout error';
 export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
 export const ERROR_RMQ_SERVICE = 'Rmq service error';

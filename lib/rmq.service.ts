@@ -8,6 +8,7 @@ import {
 import {
   IGlobalOptions,
   IMessageBroker,
+  INotifyReply,
   IPublishOptions,
   TypeQueue,
 } from './interfaces';
@@ -15,7 +16,7 @@ import { IMetaTegsMap } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
   ERROR_NO_ROUTE,
-  INDICATE_ERROR,
+  INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
   INOF_NOT_FULL_OPTIONS,
   MODULE_TOKEN,
@@ -65,12 +66,12 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public healthCheck() {
     return this.rmqNestjsConnectService.isConnected;
   }
-  public async notify<IMessage>(
+  public notify<IMessage>(
     topic: string,
     message: IMessage,
     options?: IPublishOptions,
-  ) {
-    await this.initializationCheck();
+  ): INotifyReply {
+    this.initializationCheck();
     this.rmqNestjsConnectService.publish({
       exchange: this.options.exchange.exchange,
       routingKey: topic,
@@ -81,7 +82,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         ...options,
       },
     });
-    return { sent: 'ok' };
+    return { status: 'ok' };
   }
   private async init() {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
@@ -96,7 +97,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     options?: IPublishOptions,
   ): Promise<IReply> {
     await this.initializationCheck();
-    if (!this.replyToQueue) return this.logger.error(INDICATE_ERROR);
+    if (!this.replyToQueue) return this.logger.error(INDICATE_REPLY_QUEUE);
     return new Promise<IReply>(async (resolve, reject) => {
       const correlationId = getUniqId();
       const timeout =
