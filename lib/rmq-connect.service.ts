@@ -12,6 +12,7 @@ import {
   CONNECT_BLOCKED_MESSAGE,
   CONNECT_ERROR,
   CONNECT_FAILED_MESSAGE,
+  INITIALIZATION_STEP_DELAY,
   RMQ_APP_OPTIONS,
   RMQ_CONNECT_OPTIONS,
 } from './constants';
@@ -42,7 +43,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private replyToChannel: Channel = null;
   public isConnected = false;
   private logger: LoggerService;
-  private declared = false;
+  private isInitialized = false;
   constructor(
     @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig,
     @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
@@ -52,12 +53,20 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
   }
   async onModuleInit(): Promise<void> {
-    if (this.declared) throw Error('Root RmqNestjsModule already declared!');
+    if (this.isInitialized)
+      throw Error('Root RmqNestjsModule already declared!');
     await this.setUpConnect(this.options);
     await this.createChannels();
-    this.declared = true;
-  }
 
+    this.isInitialized = true;
+  }
+  private async initializationCheck() {
+    if (this.isInitialized) return;
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
+    );
+    await this.initializationCheck();
+  }
   public async assertExchange(
     options: IExchange,
   ): Promise<Replies.AssertExchange> {
@@ -83,18 +92,20 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     typeQueue: TypeQueue,
     options?: IQueue,
   ): Promise<Replies.AssertQueue> {
+    await this.initializationCheck();
     try {
       if (typeQueue == TypeQueue.QUEUE)
         return await this.baseChannel.assertQueue(
           options.queue,
           options.options,
         );
+
       return await this.replyToChannel.assertQueue(
         options.queue,
         options.options,
       );
     } catch (error) {
-      throw new Error(`Failed to assert ${typeQueue} queue: ${error.message}`);
+      throw new Error(`Failed to assert ${typeQueue} queue: ${error}`);
     }
   }
   async bindQueue(bindQueue: IBindQueue): Promise<void> {
