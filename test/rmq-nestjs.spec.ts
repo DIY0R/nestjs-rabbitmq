@@ -30,6 +30,9 @@ describe('RMQe2e', () => {
               messageTimeout: 50000,
               serviceName: 'global srvice',
             },
+            socketOptions: {
+              clientProperties: { connection_name: 'myFriendlyName' },
+            },
           },
         ),
         ConnectionMockModule,

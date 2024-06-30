@@ -188,7 +188,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private async setUpConnect(options: IRabbitMQConfig) {
     const { username, password, hostname, port, virtualHost } = options;
     const url = `amqp://${username}:${password}@${hostname}:${port}/${virtualHost}`;
-    this.connection = await connect(url);
+    this.connection = await connect(url, this.globalOptions.socketOptions);
     this.isConnected = true;
     this.connection.on(CLOSE_EVENT, (err) => {
       this.isConnected = false;

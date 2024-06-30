@@ -73,10 +73,13 @@ export interface IGlobalBroker {
   messageTimeout?: number;
   serviceName?: string;
 }
-
+export interface ISocketOptions {
+  clientProperties: { connection_name: string };
+}
 export interface IGlobalOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
+  socketOptions?: ISocketOptions;
 }
 export interface INotifyReply {
   status: string;

@@ -9,7 +9,6 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
   DEFAULT_TIMEOUT,
   INDICATE_REPLY_QUEUE,
-  INITIALIZATION_STEP_DELAY,
   RMQ_APP_OPTIONS,
   TIMEOUT_ERROR,
 } from './constants';
