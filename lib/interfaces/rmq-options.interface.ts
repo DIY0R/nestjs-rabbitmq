@@ -78,3 +78,6 @@ export interface IGlobalOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
 }
+export interface INotifyReply {
+  status: string;
+}
