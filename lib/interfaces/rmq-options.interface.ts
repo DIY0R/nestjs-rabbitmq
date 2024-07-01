@@ -18,13 +18,7 @@ export interface IExchange {
   options?: Options.AssertExchange;
 }
 
-export interface IRabbitMQConfig {
-  username: string;
-  password: string;
-  hostname: string;
-  port: number;
-  virtualHost: string;
-}
+export type IRabbitMQConfig = string | Options.Connect;
 
 export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (...args: any[]) => Promise<IRabbitMQConfig> | IRabbitMQConfig;
