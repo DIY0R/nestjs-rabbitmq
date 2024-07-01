@@ -1,4 +1,4 @@
-import { ConsumeMessage, Message, Replies, Channel } from 'amqplib';
+import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
 import {
   IGlobalOptions,
   INotifyReply,
@@ -12,7 +12,7 @@ import {
   RMQ_APP_OPTIONS,
   TIMEOUT_ERROR,
 } from './constants';
-import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
+import { Inject, Logger, LoggerService, OnModuleInit } from '@nestjs/common';
 import { getUniqId } from './common';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
@@ -64,11 +64,12 @@ export class RmqGlobalService implements OnModuleInit {
       });
     });
   }
+
   public notify<IMessage>(
     exchange: string,
     topic: string,
     message: IMessage,
-    options?: IPublishOptions,
+    options?: Options.Publish,
   ): INotifyReply {
     this.rmqNestjsConnectService.publish({
       exchange: exchange,
@@ -81,6 +82,13 @@ export class RmqGlobalService implements OnModuleInit {
       },
     });
     return { status: 'ok' };
+  }
+
+  public sendToQueue<IMessage>(
+    ...args: [string, IMessage, Options.Publish?]
+  ): boolean {
+    const status = this.rmqNestjsConnectService.sendToQueue(...args);
+    return status;
   }
 
   public ack(
@@ -103,6 +111,7 @@ export class RmqGlobalService implements OnModuleInit {
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
       this.listenReplyQueue.bind(this),
+      this.globalOptions.globalBroker.replyTo.consumOptions,
     );
   }
 }

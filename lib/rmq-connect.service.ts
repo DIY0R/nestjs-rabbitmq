@@ -185,6 +185,21 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to send message ${error}`);
     }
   }
+  public sendToQueue<IMessage>(
+    queue: string,
+    message: IMessage,
+    options?: Options.Publish,
+  ): boolean {
+    try {
+      return this.baseChannel.sendToQueue(
+        queue,
+        Buffer.from(JSON.stringify(message)),
+        options,
+      );
+    } catch (error) {
+      throw new Error(`Failed to send message ${error}`);
+    }
+  }
   private async setUpConnect(options: IRabbitMQConfig) {
     this.connection = await connect(options, this.globalOptions);
     this.isConnected = true;
