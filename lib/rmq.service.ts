@@ -26,7 +26,7 @@ import {
   RMQ_MESSAGE_META_TEG,
   TIMEOUT_ERROR,
 } from './constants';
-import { ConsumeMessage, Message, Replies, Channel } from 'amqplib';
+import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
 import { MetaTegsScannerService } from './common';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
@@ -69,7 +69,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public notify<IMessage>(
     topic: string,
     message: IMessage,
-    options?: IPublishOptions,
+    options?: Options.Publish,
   ): INotifyReply {
     this.initializationCheck();
     this.rmqNestjsConnectService.publish({
@@ -130,7 +130,10 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     const consumeFunction = this.rmqMessageTegs.get(route);
     let result = { error: ERROR_NO_ROUTE };
     if (consumeFunction)
-      result = await consumeFunction(JSON.parse(message.content.toString()));
+      result = await consumeFunction(
+        JSON.parse(message.content.toString()),
+        message,
+      );
     if (message.properties.replyTo) {
       await this.rmqNestjsConnectService.sendToReplyQueue({
         replyTo: message.properties.replyTo,
@@ -138,7 +141,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         correlationId: message.properties.correlationId,
       });
     }
-    this.ack(message);
   }
 
   private async listenReplyQueue(
