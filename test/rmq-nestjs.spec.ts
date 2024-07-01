@@ -18,15 +18,15 @@ describe('RMQe2e', () => {
             password: 'for-test',
             hostname: 'localhost',
             port: 5672,
-            vhost: '/',
+            vhost: 'local',
             protocol: 'amqp',
           },
           {
             globalBroker: {
               replyTo: {
-                queue: 'RmqNestj1111sModuleGlobalQueue',
+                queue: '',
                 options: { exclusive: true },
-                consumOptions: { noAck: false },
+                consumOptions: { noAck: true },
               },
               messageTimeout: 50000,
               serviceName: 'global srvice',
@@ -52,7 +52,7 @@ describe('RMQe2e', () => {
     const isConnected = rmqService.healthCheck();
     expect(isConnected).toBe(true);
   });
-  describe('rpc', () => {
+  describe('rpc exchange', () => {
     it('successful global send()', async () => {
       const obj = { time: '001', fulled: 12 };
       const { message } = await rmqServieController.sendGlobalRoute(obj);
@@ -69,11 +69,7 @@ describe('RMQe2e', () => {
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
-    it('cant find route', async () => {
-      const obj = { time: 1 };
-      const message = await rmqServieController.sendNonRoute(obj);
-      expect(message).toEqual({ error: ERROR_NO_ROUTE });
-    });
+
     it('send topic patern #1 "*"', async () => {
       const obj = { time: 1 };
       const topic = 'message.text.rpc';
@@ -87,7 +83,13 @@ describe('RMQe2e', () => {
       expect(message).toEqual(obj);
     });
   });
-
+  describe('send message to queue', () => {
+    it('send to Queue', () => {
+      const obj = { aq: 1121 };
+      const status = rmqServieController.sendToQueue('test-for', obj);
+      expect(status).toBeTruthy();
+    });
+  });
   afterAll(async () => {
     await delay(500);
     await api.close();

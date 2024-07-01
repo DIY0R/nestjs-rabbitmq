@@ -8,7 +8,7 @@ export class RmqServieController {
     private readonly rmqGlobalService: RmqGlobalService,
   ) {}
 
-  async sendMessage(obj: any, topic: string = 'text.text') {
+  async sendMessage(obj: Record<string, any>, topic: string = 'text.text') {
     const sendhi = await this.rmqServie.send<object, { message: object }>(
       topic,
       obj,
@@ -16,14 +16,14 @@ export class RmqServieController {
     return sendhi;
   }
 
-  async sendNonRoute(obj: any) {
+  async sendNonRoute(obj: Record<string, any>) {
     const message = await this.rmqServie.send<object, { message: object }>(
       'text.text.text',
       obj,
     );
     return message;
   }
-  async sendGlobalRoute(obj: any) {
+  async sendGlobalRoute(obj: Record<string, any>) {
     console.log('----sendGlobalRoutesendGlobalRoutesendGlobalRoute-->');
     const message = await this.rmqGlobalService.send<
       object,
@@ -33,12 +33,17 @@ export class RmqServieController {
     return message;
   }
 
-  sendNotify(obj: any) {
+  sendNotify(obj: Record<string, any>) {
     const message = this.rmqGlobalService.notify<object>(
       'for-test',
       'rpc.notify',
       obj,
     );
     return message;
+  }
+
+  sendToQueue(queue: string, obj: Record<string, any>) {
+    const status = this.rmqGlobalService.sendToQueue<object>(queue, obj);
+    return status;
   }
 }
