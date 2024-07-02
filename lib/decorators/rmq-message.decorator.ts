@@ -1,7 +1,18 @@
-import { RMQ_MESSAGE_META_TEG } from '../constants';
+import { IDescriptor } from 'lib/interfaces';
+import { NON_ROUTE, RMQ_MESSAGE_META_TEG } from '../constants';
 
-export function MessageRoute(event: string) {
-  return function (target: any, propertyKey: string | symbol, descriptor: any) {
+export const reflectFunction = (event: string) =>
+  function (
+    target: any,
+    propertyKey: string | symbol,
+    descriptor: IDescriptor,
+  ) {
     Reflect.defineMetadata(RMQ_MESSAGE_META_TEG, event, descriptor.value);
   };
+
+export function MessageRoute(event: string) {
+  return reflectFunction(event);
+}
+export function MessageNonRoute() {
+  return reflectFunction(NON_ROUTE);
 }

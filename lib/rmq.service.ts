@@ -20,6 +20,7 @@ import {
   INITIALIZATION_STEP_DELAY,
   INOF_NOT_FULL_OPTIONS,
   MODULE_TOKEN,
+  NON_ROUTE,
   RECIVED_MESSAGE_ERROR,
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
@@ -127,7 +128,8 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     const route = this.getRouteByTopic(message.fields.routingKey);
-    const consumeFunction = this.rmqMessageTegs.get(route);
+    const consumeFunction =
+      this.rmqMessageTegs.get(route) || this.rmqMessageTegs.get(NON_ROUTE);
     let result = { error: ERROR_NO_ROUTE };
     if (consumeFunction)
       result = await consumeFunction(
