@@ -9,7 +9,7 @@ export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;
 export const MESSAGE_ROUTER = 'MessageRouterExplorer';
 export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
-
+export const NON_ROUTE = 'non_route_one';
 export const INDICATE_REPLY_QUEUE = 'Please indicate `replyToQueue`';
 export const TIMEOUT_ERROR = 'Response timeout error';
 export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
