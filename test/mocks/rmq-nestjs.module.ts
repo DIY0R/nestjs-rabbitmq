@@ -9,6 +9,7 @@ import { RmqServieController } from './rmq.controller';
       exchange: {
         exchange: 'for-test',
         type: 'topic',
+
         options: {
           durable: true,
           autoDelete: true,
@@ -17,7 +18,7 @@ import { RmqServieController } from './rmq.controller';
       queue: {
         queue: 'test-for',
         options: { durable: true, autoDelete: true },
-        consumOptions: { noAck: true },
+        consumOptions: { noAck: false },
       },
       replyTo: {
         queue: '',

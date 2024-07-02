@@ -24,11 +24,10 @@ export class RmqServieController {
     return message;
   }
   async sendGlobalRoute(obj: Record<string, any>) {
-    console.log('----sendGlobalRoutesendGlobalRoutesendGlobalRoute-->');
     const message = await this.rmqGlobalService.send<
       object,
       { message: object }
-    >('for-test', 'rpc.global', obj);
+    >('for-test', 'global.rpc', obj);
 
     return message;
   }
@@ -36,7 +35,7 @@ export class RmqServieController {
   sendNotify(obj: Record<string, any>) {
     const message = this.rmqGlobalService.notify<object>(
       'for-test',
-      'rpc.notify',
+      'notify.global',
       obj,
     );
     return message;

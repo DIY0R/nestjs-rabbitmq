@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 import { RmqServieController } from './mocks/rmq.controller';
 import { RmqNestjsModule, RmqService } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
-import { ERROR_NO_ROUTE } from '../lib/constants';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
