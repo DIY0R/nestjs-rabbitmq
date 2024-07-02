@@ -67,8 +67,20 @@ export interface IGlobalBroker {
   messageTimeout?: number;
   serviceName?: string;
 }
+
 export interface ISocketOptions {
-  clientProperties: { connection_name: string };
+  clientProperties?: { connection_name: string };
+}
+interface ISocketOptionsCa extends ISocketOptions {
+  passphrase: string;
+  ca: (Buffer | string)[];
+}
+export interface ISocketOptionsSSLPFX extends ISocketOptionsCa {
+  pfx: Buffer | string;
+}
+export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
+  cert: Buffer | string;
+  key: Buffer | string;
 }
 export interface IGlobalOptions {
   globalBroker?: IGlobalBroker;
