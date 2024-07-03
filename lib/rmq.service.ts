@@ -96,7 +96,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         },
         confirmationFunction,
       );
-      if (this.globalOptions.typeChanel == TypeChanel.CHANEL)
+      if (this.globalOptions.typeChanel !== TypeChanel.CONFIR_CHANEL)
         resolve({ status: 'ok' });
     });
   }
