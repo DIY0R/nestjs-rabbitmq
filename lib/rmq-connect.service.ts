@@ -62,17 +62,10 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
 
     this.isInitialized = true;
   }
-  private async initializationCheck() {
-    if (this.isInitialized) return;
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
-    );
-    await this.initializationCheck();
-  }
-  public async assertExchange(
-    options: IExchange,
-  ): Promise<Replies.AssertExchange> {
+
+  async assertExchange(options: IExchange): Promise<Replies.AssertExchange> {
     try {
+      await this.initializationCheck();
       const exchange = await this.baseChannel.assertExchange(
         options.exchange,
         options.type,
@@ -85,17 +78,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       );
     }
   }
-  public ack(
-    ...params: Parameters<Channel['ack']>
-  ): ReturnType<Channel['ack']> {
+  ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
     return this.baseChannel.ack(...params);
   }
-  public nack(
-    ...params: Parameters<Channel['nack']>
-  ): ReturnType<Channel['nack']> {
+  nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
     return this.baseChannel.nack(...params);
   }
-  public async assertQueue(
+  async assertQueue(
     typeQueue: TypeQueue,
     options?: IQueue,
   ): Promise<Replies.AssertQueue> {
@@ -115,7 +104,9 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error}`);
     }
   }
+
   async bindQueue(bindQueue: IBindQueue): Promise<void> {
+    await this.initializationCheck();
     try {
       await this.baseChannel.bindQueue(
         bindQueue.queue,
@@ -131,6 +122,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   async sendToReplyQueue(sendToQueueOptions: ISendToReplyQueueOptions) {
     try {
+      await this.initializationCheck();
       this.replyToChannel.sendToQueue(
         sendToQueueOptions.replyTo,
         Buffer.from(JSON.stringify(sendToQueueOptions.content)),
@@ -177,11 +169,12 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  publish(
+  async publish(
     sendMessage: ISendMessage,
     confirmationFunction?: (err: any, ok: Replies.Empty) => void,
-  ): void {
+  ): Promise<void> {
     try {
+      await this.initializationCheck();
       this.baseChannel.publish(
         sendMessage.exchange,
         sendMessage.routingKey,
@@ -224,7 +217,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  public sendToQueue<IMessage>(
+  sendToQueue<IMessage>(
     queue: string,
     message: IMessage,
     options?: Options.Publish,
@@ -239,7 +232,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to send message ${error}`);
     }
   }
-
+  private async initializationCheck() {
+    if (this.isInitialized) return;
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
+    );
+    await this.initializationCheck();
+  }
   private async createChannel() {
     return await this.connection.createChannel();
   }

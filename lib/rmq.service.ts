@@ -72,18 +72,18 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public healthCheck() {
     return this.rmqNestjsConnectService.isConnected;
   }
-  public notify<IMessage>(
+  public async notify<IMessage>(
     topic: string,
     message: IMessage,
     options?: Options.Publish,
   ): Promise<INotifyReply> {
     this.initializationCheck();
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const confirmationFunction = (err: any, ok: Replies.Empty) => {
         if (err !== null) return reject(NACKED);
         resolve({ status: 'ok' });
       };
-      this.rmqNestjsConnectService.publish(
+      await this.rmqNestjsConnectService.publish(
         {
           exchange: this.options.exchange.exchange,
           routingKey: topic,
@@ -157,7 +157,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
             reject(NACKED);
           }
         };
-        this.rmqNestjsConnectService.publish(
+        await this.rmqNestjsConnectService.publish(
           {
             exchange: this.options.exchange.exchange,
             routingKey: topic,

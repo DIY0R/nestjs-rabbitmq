@@ -22,6 +22,7 @@ describe('RMQe2e', () => {
             protocol: 'amqp',
           },
           {
+            typeChanel: TypeChanel.CONFIR_CHANEL,
             globalBroker: {
               replyTo: {
                 queue: '',
@@ -34,7 +35,6 @@ describe('RMQe2e', () => {
             socketOptions: {
               clientProperties: { connection_name: 'myFriendlyName' },
             },
-            typeChanel: TypeChanel.CONFIR_CHANEL,
           },
         ),
         ConnectionMockModule,
