@@ -104,7 +104,10 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error}`);
     }
   }
-
+  async getBaseChanel() {
+    await this.initializationCheck();
+    return this.baseChannel;
+  }
   async bindQueue(bindQueue: IBindQueue): Promise<void> {
     await this.initializationCheck();
     try {

@@ -31,7 +31,7 @@ export class RmqEvents {
   }
   @MessageRoute('notify.global')
   recivedTopicNotify(obj: any, consumeMessage: ConsumeMessage) {
-    // this.rmqServie.ack(consumeMessage);
+    this.rmqServie.ack(consumeMessage);
     Logger.log(obj);
   }
   @MessageRoute('global.rpc')

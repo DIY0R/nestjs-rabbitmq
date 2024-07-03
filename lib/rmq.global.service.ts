@@ -1,4 +1,11 @@
-import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
+import {
+  ConsumeMessage,
+  Message,
+  Replies,
+  Channel,
+  Options,
+  ConfirmChannel,
+} from 'amqplib';
 import {
   IGlobalOptions,
   INotifyReply,
@@ -23,6 +30,9 @@ export class RmqGlobalService implements OnModuleInit {
   private replyToQueue: Replies.AssertQueue = null;
   private sendResponseEmitter: EventEmitter = new EventEmitter();
   private logger: LoggerService;
+
+  public channel: Channel | ConfirmChannel = null;
+
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
@@ -33,6 +43,7 @@ export class RmqGlobalService implements OnModuleInit {
   }
   async onModuleInit() {
     if (this.globalOptions?.globalBroker?.replyTo) await this.replyQueue();
+    this.channel = await this.rmqNestjsConnectService.getBaseChanel();
   }
   public async send<IMessage, IReply>(
     exchange: string,
