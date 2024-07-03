@@ -17,7 +17,7 @@ import { RmqServieController } from './rmq.controller';
       },
       queue: {
         queue: 'test-for',
-        options: { durable: true, autoDelete: true },
+        options: { durable: true },
         consumOptions: { noAck: false },
       },
       replyTo: {

@@ -3,7 +3,6 @@ import { RMQ_APP_OPTIONS, RMQ_CONNECT_OPTIONS } from './constants';
 import {
   IRabbitMQConfigAsync,
   IRabbitMQConfig,
-  IGlobalBroker,
   IGlobalOptions,
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';

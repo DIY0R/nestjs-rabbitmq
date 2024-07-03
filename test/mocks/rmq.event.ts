@@ -14,6 +14,11 @@ export class RmqEvents {
     this.rmqServie.ack(consumeMessage);
     return { message: obj };
   }
+  @MessageRoute('text.nothing')
+  recivedReturnNoting(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+  }
+
   @MessageRoute('*.*.rpc')
   recivedTopic(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
@@ -26,7 +31,7 @@ export class RmqEvents {
   }
   @MessageRoute('notify.global')
   recivedTopicNotify(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+    // this.rmqServie.ack(consumeMessage);
     Logger.log(obj);
   }
   @MessageRoute('global.rpc')

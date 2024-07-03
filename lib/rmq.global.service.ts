@@ -3,12 +3,14 @@ import {
   IGlobalOptions,
   INotifyReply,
   IPublishOptions,
+  TypeChanel,
   TypeQueue,
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
   DEFAULT_TIMEOUT,
   INDICATE_REPLY_QUEUE,
+  NACKED,
   RMQ_APP_OPTIONS,
   TIMEOUT_ERROR,
 } from './constants';
@@ -40,6 +42,7 @@ export class RmqGlobalService implements OnModuleInit {
   ): Promise<IReply> {
     if (!this.replyToQueue) return this.logger.error(INDICATE_REPLY_QUEUE);
     const { messageTimeout, serviceName } = this.globalOptions.globalBroker;
+
     return new Promise<IReply>(async (resolve, reject) => {
       const correlationId = getUniqId();
       const timeout = options?.timeout ?? messageTimeout ?? DEFAULT_TIMEOUT;
@@ -49,19 +52,28 @@ export class RmqGlobalService implements OnModuleInit {
         const { content } = msg;
         if (content.toString()) resolve(JSON.parse(content.toString()));
       });
+      const confirmationFunction = (err: any, ok: Replies.Empty) => {
+        if (err) {
+          clearTimeout(timerId);
+          reject(NACKED);
+        }
+      };
 
-      this.rmqNestjsConnectService.publish({
-        exchange: exchange,
-        routingKey: topic,
-        content: message,
-        options: {
-          replyTo: this.replyToQueue.queue,
-          appId: serviceName,
-          correlationId,
-          timestamp: new Date().getTime(),
-          ...options,
+      this.rmqNestjsConnectService.publish(
+        {
+          exchange: exchange,
+          routingKey: topic,
+          content: message,
+          options: {
+            replyTo: this.replyToQueue.queue,
+            appId: serviceName,
+            correlationId,
+            timestamp: new Date().getTime(),
+            ...options,
+          },
         },
-      });
+        confirmationFunction,
+      );
     });
   }
 
@@ -70,18 +82,28 @@ export class RmqGlobalService implements OnModuleInit {
     topic: string,
     message: IMessage,
     options?: Options.Publish,
-  ): INotifyReply {
-    this.rmqNestjsConnectService.publish({
-      exchange: exchange,
-      routingKey: topic,
-      content: message,
-      options: {
-        appId: this.globalOptions.globalBroker.serviceName || '',
-        timestamp: new Date().getTime(),
-        ...options,
-      },
+  ): Promise<INotifyReply> {
+    return new Promise((resolve, reject) => {
+      const confirmationFunction = (err: any, ok: Replies.Empty) => {
+        if (err !== null) return reject(NACKED);
+        resolve({ status: 'ok' });
+      };
+      this.rmqNestjsConnectService.publish(
+        {
+          exchange,
+          routingKey: topic,
+          content: message,
+          options: {
+            appId: this.globalOptions.globalBroker.serviceName,
+            timestamp: new Date().getTime(),
+            ...options,
+          },
+        },
+        confirmationFunction,
+      );
+      if (this.globalOptions.typeChanel == TypeChanel.CHANEL)
+        resolve({ status: 'ok' });
     });
-    return { status: 'ok' };
   }
 
   public sendToQueue<IMessage>(

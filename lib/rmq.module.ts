@@ -4,7 +4,6 @@ import {
   IMessageBroker,
   IRabbitMQConfigAsync,
   IRabbitMQConfig,
-  IGlobalBroker,
   IGlobalOptions,
 } from './interfaces';
 import { MODULE_TOKEN, RMQ_BROKER_OPTIONS, TARGET_MODULE } from './constants';

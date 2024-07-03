@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRoute, RmqService, RmqGlobalService } from '../../lib';
+import { RmqService, RmqGlobalService } from '../../lib';
 
 @Injectable()
 export class RmqServieController {
@@ -16,13 +16,6 @@ export class RmqServieController {
     return sendhi;
   }
 
-  async sendNonRoute(obj: Record<string, any>) {
-    const message = await this.rmqServie.send<object, { message: object }>(
-      'text.text.text',
-      obj,
-    );
-    return message;
-  }
   async sendGlobalRoute(obj: Record<string, any>) {
     const message = await this.rmqGlobalService.send<
       object,
@@ -40,7 +33,10 @@ export class RmqServieController {
     );
     return message;
   }
-
+  sendNotifyService(obj: Record<string, any>) {
+    const message = this.rmqServie.notify<object>('notify.global', obj);
+    return message;
+  }
   sendToQueue(queue: string, obj: Record<string, any>) {
     const status = this.rmqGlobalService.sendToQueue<object>(queue, obj);
     return status;

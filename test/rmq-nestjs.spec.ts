@@ -1,8 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { RmqServieController } from './mocks/rmq.controller';
-import { RmqNestjsModule, RmqService } from '../lib';
+import { RmqNestjsModule, RmqService, TypeChanel } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
+import { RETURN_NOTHING } from '../lib/constants';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
@@ -33,6 +34,7 @@ describe('RMQe2e', () => {
             socketOptions: {
               clientProperties: { connection_name: 'myFriendlyName' },
             },
+            typeChanel: TypeChanel.CONFIR_CHANEL,
           },
         ),
         ConnectionMockModule,
@@ -44,12 +46,22 @@ describe('RMQe2e', () => {
     rmqServieController =
       apiModule.get<RmqServieController>(RmqServieController);
     rmqService = apiModule.get(RmqService);
-    console.warn = jest.fn();
-    console.log = jest.fn();
   });
   test('check connection', async () => {
     const isConnected = rmqService.healthCheck();
     expect(isConnected).toBe(true);
+  });
+  describe('notify', () => {
+    it('successful global notify()', async () => {
+      const obj = { time: '001', fulled: 12 };
+      const response = await rmqServieController.sendNotify(obj);
+      expect(response).toEqual({ status: 'ok' });
+    });
+    it('successful service notify()', async () => {
+      const obj = { time: '001', fulled: 12 };
+      const response = await rmqServieController.sendNotifyService(obj);
+      expect(response).toEqual({ status: 'ok' });
+    });
   });
   describe('rpc exchange', () => {
     it('successful global send()', async () => {
@@ -57,16 +69,19 @@ describe('RMQe2e', () => {
       const { message } = await rmqServieController.sendGlobalRoute(obj);
       expect(message).toEqual(obj);
     });
-    it('successful global notify()', async () => {
-      const obj = { time: '001', fulled: 12 };
-      const response = rmqServieController.sendNotify(obj);
-      expect(response).toEqual({ status: 'ok' });
-    });
+
     it('successful send()', async () => {
-      const obj = { time: '001', fulled: 12 };
+      const obj = { obj: 1 };
       const topic = 'text.text';
       const { message } = await rmqServieController.sendMessage(obj, topic);
+
       expect(message).toEqual(obj);
+    });
+    it('successful send() but return nothing', async () => {
+      const obj = { obj: 1 };
+      const topic = 'text.nothing';
+      const message = await rmqServieController.sendMessage(obj, topic);
+      expect(message).toEqual({ info: RETURN_NOTHING });
     });
 
     it('send topic patern #1 "*"', async () => {
