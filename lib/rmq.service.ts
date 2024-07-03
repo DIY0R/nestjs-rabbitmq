@@ -98,34 +98,72 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     options?: IPublishOptions,
   ): Promise<IReply> {
     await this.initializationCheck();
-    if (!this.replyToQueue) return this.logger.error(INDICATE_REPLY_QUEUE);
+    if (!this.replyToQueue) {
+      this.logger.error(INDICATE_REPLY_QUEUE);
+      throw new Error(INDICATE_REPLY_QUEUE);
+    }
+
     return new Promise<IReply>(async (resolve, reject) => {
       const correlationId = getUniqId();
       const timeout =
         options?.timeout ?? this.options.messageTimeout ?? DEFAULT_TIMEOUT;
-      const timerId = setTimeout(() => reject(TIMEOUT_ERROR), timeout);
+
+      const timerId = setTimeout(() => {
+        this.logger.error(`Message timed out after ${timeout}ms`, {
+          correlationId,
+        });
+        reject(new Error(TIMEOUT_ERROR));
+      }, timeout);
+
       this.sendResponseEmitter.once(correlationId, (msg: Message) => {
         clearTimeout(timerId);
-        if (msg.properties?.headers?.['-x-error'])
-          reject(RECIVED_MESSAGE_ERROR);
-        const { content } = msg;
-        if (content.toString()) resolve(JSON.parse(content.toString()));
+        if (msg.properties?.headers?.['-x-error']) {
+          this.logger.error('Received message with error header', {
+            correlationId,
+          });
+          return reject(new Error(RECIVED_MESSAGE_ERROR));
+        }
+
+        try {
+          const { content } = msg;
+          if (content.toString()) {
+            resolve(JSON.parse(content.toString()));
+          } else {
+            this.logger.error('Received empty message content', {
+              correlationId,
+            });
+            reject(new Error('Received empty message content'));
+          }
+        } catch (error) {
+          this.logger.error('Error parsing message content', {
+            correlationId,
+            error,
+          });
+          reject(error);
+        }
       });
 
-      this.rmqNestjsConnectService.publish({
-        exchange: this.options.exchange.exchange,
-        routingKey: topic,
-        content: message,
-        options: {
-          replyTo: this.replyToQueue.queue,
-          appId: this.options.serviceName,
-          correlationId,
-          timestamp: new Date().getTime(),
-          ...options,
-        },
-      });
+      try {
+        this.rmqNestjsConnectService.publish({
+          exchange: this.options.exchange.exchange,
+          routingKey: topic,
+          content: message,
+          options: {
+            replyTo: this.replyToQueue.queue,
+            appId: this.options.serviceName,
+            correlationId,
+            timestamp: new Date().getTime(),
+            ...options,
+          },
+        });
+      } catch (error) {
+        clearTimeout(timerId);
+        this.logger.error('Error publishing message', { correlationId, error });
+        reject(error);
+      }
     });
   }
+
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     const route = this.getRouteByTopic(message.fields.routingKey);
     const consumeFunction =

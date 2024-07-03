@@ -17,7 +17,7 @@
     "lint": "eslint \"{lib,test}/**/*.ts\" --fix",
     "prepare": "husky install",
     "release": "release-it",
-    "test": "jest"
+    "test": "jest "
   },
   "dependencies": {
     "@types/amqplib": "^0.10.5",

@@ -72,11 +72,11 @@ export interface ISocketOptions {
   clientProperties?: { connection_name: string };
 }
 interface ISocketOptionsCa extends ISocketOptions {
-  passphrase: string;
-  ca: (Buffer | string)[];
+  passphrase?: string;
+  ca?: (Buffer | string)[];
 }
 export interface ISocketOptionsSSLPFX extends ISocketOptionsCa {
-  pfx: Buffer | string;
+  pfx?: Buffer | string;
 }
 export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
   cert: Buffer | string;
@@ -85,7 +85,7 @@ export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
 export interface IGlobalOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
-  socketOptions?: ISocketOptions;
+  socketOptions?: ISocketOptionsSSLPFX | ISocketOptionsSSLKEY;
 }
 export interface INotifyReply {
   status: string;
