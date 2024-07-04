@@ -77,7 +77,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     message: IMessage,
     options?: Options.Publish,
   ): Promise<INotifyReply> {
-    this.initializationCheck();
+    await this.initializationCheck();
     return new Promise(async (resolve, reject) => {
       const confirmationFunction = (err: any, ok: Replies.Empty) => {
         if (err !== null) return reject(NACKED);
