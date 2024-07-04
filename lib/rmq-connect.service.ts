@@ -194,7 +194,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async setUpConnect(options: IRabbitMQConfig) {
-    this.connection = await connect(options, this.globalOptions);
+    this.connection = await connect(options, this.globalOptions.socketOptions);
     this.isConnected = true;
     this.connection.on(CLOSE_EVENT, (err) => {
       this.isConnected = false;
@@ -207,6 +207,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(CONNECT_BLOCKED_MESSAGE);
     });
   }
+
   private async createChannels() {
     try {
       this.baseChannel =
