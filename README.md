@@ -1,7 +1,7 @@
 # Nest.js with RabbitMQ
 
-[![npm version](https://badgen.net/npm/v/nestjs-rabbitmq-bridge)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge)
-[![npm version](https://badgen.net/npm/license/nestjs-rabbitmq-bridge)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge)
+[![version](https://img.shields.io/npm/v/nestjs-rabbitmq-bridge.svg)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge) 
+[![license](https://badgen.net/npm/license/nestjs-rabbitmq-bridge)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge)
 [![checker](https://github.com/DIY0R/nestjs-rabbitmq-bridge/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq-bridge/actions/workflows/main.yml)
 
 ---
