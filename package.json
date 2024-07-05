@@ -63,11 +63,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/DIY0R/nestjs-rabbitmq-bridge"
+    "url": "https://github.com/DIY0R/nestjs-rabbitmq"
   },
-  "homepage": "https://github.com/DIY0R/nestjs-rabbitmq-bridge",
+  "homepage": "https://github.com/DIY0R/nestjs-rabbitmq",
   "bugs": {
-    "url": "https://github.com/DIY0R/nestjs-rabbitmq-bridge/issues"
+    "url": "https://github.com/DIY0R/nestjs-rabbitmq/issues"
   },
   "npm": {
     "publish": true
