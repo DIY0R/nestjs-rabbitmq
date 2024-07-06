@@ -4,6 +4,8 @@ export const RMQ_MESSAGE_META_TEG = 'RMQ_MESSAGE_META_TEG';
 export const RMQ_ROUTES_TRANSFORM = 'RMQ_ROUTES_TRANSFORM';
 export const RMQ_APP_OPTIONS = 'RMQ_APP_OPTIONS';
 export const TARGET_MODULE = 'TARGET_MODULE';
+export const SER_DAS_KEY = 'SER_DAS_KEY';
+export const SERDES = 'SERDES';
 
 export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;

@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  MessageNonRoute,
-  MessageRoute,
-} from '../../lib/decorators/rmq-message.decorator';
+import { MessageNonRoute, MessageRoute, SerDes } from '../../lib/decorators/';
 import { RmqService } from '../../lib';
 import { ConsumeMessage } from 'amqplib';
 
@@ -19,9 +16,20 @@ export class RmqEvents {
     this.rmqServie.ack(consumeMessage);
   }
 
-  @MessageRoute('*.*.rpc')
+  @MessageRoute('*.rpc.*')
+  @SerDes({
+    deserialize: (message: Buffer): any => JSON.parse(message.toString()),
+    serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
+  })
   recivedTopic(obj: any, consumeMessage: ConsumeMessage) {
+    
     this.rmqServie.ack(consumeMessage);
+    return { message: obj };
+  }
+  @MessageRoute('global.rpc')
+  recivedGlobal(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+ 
     return { message: obj };
   }
   @MessageRoute('rpc.#')
@@ -33,11 +41,6 @@ export class RmqEvents {
   recivedTopicNotify(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
     Logger.log(obj);
-  }
-  @MessageRoute('global.rpc')
-  recivedGlobal(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
-    return { message: obj };
   }
 
   @MessageNonRoute()

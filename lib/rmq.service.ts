@@ -10,10 +10,11 @@ import {
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
+  ISerDes,
   TypeChanel,
   TypeQueue,
 } from './interfaces';
-import { IMetaTegsMap } from './interfaces/metategs';
+import { IMetaTegsMap, MetaTegEnpoint } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
   EMPTY_MESSAGE,
@@ -30,6 +31,8 @@ import {
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
   RMQ_MESSAGE_META_TEG,
+  SER_DAS_KEY,
+  SERDES,
   TIMEOUT_ERROR,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
@@ -38,6 +41,7 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
@@ -52,8 +56,11 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
-    @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
+    private readonly reflector: Reflector,
+
+    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
+    @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
+    @Inject(SERDES) private readonly serDes: ISerDes,
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
     this.logger = globalOptions.appOptions?.logger
@@ -87,7 +94,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         {
           exchange: this.options.exchange.exchange,
           routingKey: topic,
-          content: message,
+          content: this.serDes.serializer(message),
           options: {
             appId: this.options.serviceName,
             timestamp: new Date().getTime(),
@@ -143,7 +150,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           }
           const content = msg.content;
           if (content.toString()) {
-            resolve(JSON.parse(content.toString()));
+            resolve(this.serDes.deserialize(content));
           } else {
             this.logger.error(EMPTY_MESSAGE, {
               correlationId,
@@ -161,7 +168,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           {
             exchange: this.options.exchange.exchange,
             routingKey: topic,
-            content: message,
+            content: this.serDes.serializer(message),
             options: {
               replyTo: this.replyToQueue.queue,
               appId: this.options.serviceName,
@@ -182,30 +189,65 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     try {
-      const messageParse = JSON.parse(message.content.toString());
       if (!message) throw new Error('Received null message');
+
       const route = this.getRouteByTopic(message.fields.routingKey);
-      const consumeFunction =
-        this.rmqMessageTegs.get(route) || this.rmqMessageTegs.get(NON_ROUTE);
 
+      const consumer = this.getConsumer(route);
+      const messageParse = this.deserializeMessage(consumer, message.content);
       let result = { error: ERROR_NO_ROUTE };
-      if (consumeFunction) {
-        result = (await consumeFunction(messageParse, message)) || {
-          info: RETURN_NOTHING,
-        };
-      }
+      if (consumer.handler)
+        result = await this.handleMessage(
+          consumer.handler,
+          messageParse,
+          message,
+        );
 
-      if (message.properties.replyTo) {
-        await this.rmqNestjsConnectService.sendToReplyQueue({
-          replyTo: message.properties.replyTo,
-          content: result,
-          correlationId: message.properties.correlationId,
-        });
-      }
+      if (message.properties.replyTo)
+        await this.sendReply(
+          message.properties.replyTo,
+          consumer,
+          result,
+          message.properties.correlationId,
+        );
     } catch (error) {
       this.logger.error('Error processing message', { error, message });
       this.rmqNestjsConnectService.nack(message, false, false);
     }
+  }
+
+  private getConsumer(route: string): MetaTegEnpoint {
+    return this.rmqMessageTegs.get(route) || this.rmqMessageTegs.get(NON_ROUTE);
+  }
+
+  private deserializeMessage(consumer: any, content: Buffer) {
+    return consumer.serdes?.deserialize
+      ? consumer.serdes.deserialize(content)
+      : this.serDes.deserialize(content);
+  }
+
+  private async handleMessage(
+    handler: any,
+    messageParse: any,
+    message: ConsumeMessage,
+  ) {
+    const result = await handler(messageParse, message);
+    return result || { info: RETURN_NOTHING };
+  }
+
+  private async sendReply(
+    replyTo: string,
+    consumer: any,
+    result: any,
+    correlationId: string,
+  ) {
+    const serializedResult =
+      consumer.serdes?.serializer(result) || this.serDes.serializer(result);
+    await this.rmqNestjsConnectService.sendToReplyQueue({
+      replyTo,
+      content: serializedResult,
+      correlationId,
+    });
   }
 
   private async listenReplyQueue(
@@ -272,13 +314,20 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
   private getRouteByTopic(topic: string): string {
     for (const route of this.rmqMessageTegs.keys()) {
-      if (route === topic) return route;
+      if (route === topic) {
+        return route;
+      }
       const regexString =
-        '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+.?)+') + '$';
-      if (topic.search(regexString) !== -1) return route;
+        '^' +
+        route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\\.?)+') +
+        '$';
+      if (topic.search(new RegExp(regexString)) !== -1) {
+        return route;
+      }
     }
     return '';
   }
+
   async onModuleDestroy() {
     this.sendResponseEmitter.removeAllListeners();
   }

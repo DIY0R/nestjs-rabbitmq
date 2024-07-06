@@ -31,6 +31,12 @@ describe('RMQe2e', () => {
               },
               messageTimeout: 50000,
               serviceName: 'global srvice',
+              serDes: {
+                deserialize: (message: Buffer): any =>
+                  JSON.parse(message.toString()),
+                serializer: (message: any): Buffer =>
+                  Buffer.from(JSON.stringify(message)),
+              },
             },
             socketOptions: {
               clientProperties: { connection_name: 'myFriendlyName' },
@@ -86,7 +92,7 @@ describe('RMQe2e', () => {
 
     it('send topic patern #1 "*"', async () => {
       const obj = { time: 1 };
-      const topic = 'message.text.rpc';
+      const topic = 'message.rpc.tsp';
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
