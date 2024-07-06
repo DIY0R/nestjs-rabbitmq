@@ -1,10 +1,15 @@
 import { ConsumeMessage } from 'amqplib';
+import { ISerDes } from './rmq-options.interface';
 
 export type IConsumFunction = (
   message?: any,
   consumeMessage?: ConsumeMessage,
 ) => any | void;
-export type IMetaTegsMap = Map<string, IConsumFunction>;
+export interface MetaTegEnpoint {
+  handler: IConsumFunction;
+  serdes?: ISerDes | undefined;
+}
+export type IMetaTegsMap = Map<string, MetaTegEnpoint>;
 export interface IDescriptor {
   value?: IConsumFunction;
 }

@@ -18,6 +18,7 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
   DEFAULT_TIMEOUT,
   INDICATE_REPLY_QUEUE,
+  INITIALIZATION_STEP_DELAY,
   NACKED,
   RMQ_APP_OPTIONS,
   SERDES,
@@ -32,7 +33,7 @@ export class RmqGlobalService implements OnModuleInit {
   private replyToQueue: Replies.AssertQueue = null;
   private sendResponseEmitter: EventEmitter = new EventEmitter();
   private logger: LoggerService;
-
+  private isInitialized = false;
   public channel: Channel | ConfirmChannel = null;
 
   constructor(
@@ -47,6 +48,7 @@ export class RmqGlobalService implements OnModuleInit {
   async onModuleInit() {
     if (this.globalOptions?.globalBroker?.replyTo) await this.replyQueue();
     this.channel = await this.rmqNestjsConnectService.getBaseChanel();
+    this.isInitialized = true;
   }
   public async send<IMessage, IReply>(
     exchange: string,
@@ -55,8 +57,8 @@ export class RmqGlobalService implements OnModuleInit {
     options?: IPublishOptions,
   ): Promise<IReply> {
     if (!this.replyToQueue) return this.logger.error(INDICATE_REPLY_QUEUE);
+    await this.initializationCheck();
     const { messageTimeout, serviceName } = this.globalOptions.globalBroker;
-
     return new Promise<IReply>(async (resolve, reject) => {
       const correlationId = getUniqId();
       const timeout = options?.timeout ?? messageTimeout ?? DEFAULT_TIMEOUT;
@@ -73,7 +75,7 @@ export class RmqGlobalService implements OnModuleInit {
         }
       };
 
-      this.rmqNestjsConnectService.publish(
+      await this.rmqNestjsConnectService.publish(
         {
           exchange: exchange,
           routingKey: topic,
@@ -155,5 +157,12 @@ export class RmqGlobalService implements OnModuleInit {
       this.listenReplyQueue.bind(this),
       this.globalOptions.globalBroker.replyTo.consumOptions,
     );
+  }
+  private async initializationCheck() {
+    if (this.isInitialized) return;
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
+    );
+    await this.initializationCheck();
   }
 }
