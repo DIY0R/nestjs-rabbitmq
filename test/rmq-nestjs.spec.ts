@@ -31,6 +31,12 @@ describe('RMQe2e', () => {
               },
               messageTimeout: 50000,
               serviceName: 'global srvice',
+              serDes: {
+                deserialize: (message: Buffer): any =>
+                  JSON.parse(message.toString()),
+                serializer: (message: any): Buffer =>
+                  Buffer.from(JSON.stringify(message)),
+              },
             },
             socketOptions: {
               clientProperties: { connection_name: 'myFriendlyName' },
