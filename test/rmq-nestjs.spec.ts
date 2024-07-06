@@ -92,7 +92,7 @@ describe('RMQe2e', () => {
 
     it('send topic patern #1 "*"', async () => {
       const obj = { time: 1 };
-      const topic = 'message.text.rpc';
+      const topic = 'message.rpc.tsp';
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
