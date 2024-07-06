@@ -1,8 +1,8 @@
 # Nest.js with RabbitMQ
 
-[![version](https://img.shields.io/npm/v/nestjs-rabbitmq-bridge.svg)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge) 
-[![license](https://badgen.net/npm/license/nestjs-rabbitmq-bridge)](https://www.npmjs.com/package/nestjs-rabbitmq-bridge)
-[![checker](https://github.com/DIY0R/nestjs-rabbitmq-bridge/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq-bridge/actions/workflows/main.yml)
+[![version](https://img.shields.io/npm/v/@diy0r/nestjs-rabbitmq.svg)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
+[![license](https://badgen.net/npm/license/@diy0r/nestjs-rabbitmq)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
+[![checker](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml)
 
 ---
 
@@ -10,10 +10,10 @@
 
 ### Installation
 
-Start by installing the `nestjs-rabbitmq-bridge` package:
+Start by installing the `@diy0r/nestjs-rabbitmq` package:
 
 ```bash
-npm i nestjs-rabbitmq-bridge
+npm i @diy0r/nestjs-rabbitmq
 ```
 
 ### Importing the Module
@@ -25,7 +25,7 @@ import {
   RmqNestjsModule,
   IRabbitMQConfig,
   IRabbitMQConfigAsync,
-} from 'nestjs-rabbitmq-bridge';
+} from '@diy0r/nestjs-rabbitmq';
 
 const syncOptions: IRabbitMQConfig =
   {
@@ -245,7 +245,7 @@ Note that in these examples we do not specify the exchange in the requests becau
 
 ## RmqEvents: Listening to the Queue
 
-In `nestjs-rabbitmq-bridge`, requests are processed through the `@MessageRoute` and `@MessageNonRoute` decorators.
+In `@diy0r/nestjs-rabbitmq`, requests are processed through the `@MessageRoute` and `@MessageNonRoute` decorators.
 
 ```typescript
 @Injectable()
