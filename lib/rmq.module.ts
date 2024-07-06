@@ -6,12 +6,7 @@ import {
   IRabbitMQConfig,
   IGlobalOptions,
 } from './interfaces';
-import {
-  MODULE_TOKEN,
-  RMQ_BROKER_OPTIONS,
-  SERDES,
-  TARGET_MODULE,
-} from './constants';
+import { MODULE_TOKEN, RMQ_BROKER_OPTIONS, SERDES } from './constants';
 import { DiscoveryModule } from '@nestjs/core';
 import { MetaTegsScannerService, getUniqId } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
@@ -43,7 +38,7 @@ export class RmqNestjsModule {
       imports: [DiscoveryModule],
       providers: [
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
-        { provide: SERDES, useValue: serDes },
+        { provide: SERDES, useValue: options.serDes ?? serDes },
         { provide: MODULE_TOKEN, useFactory: getUniqId },
         RmqService,
         MetaTegsScannerService,
