@@ -1,5 +1,5 @@
 import { DynamicModule, Module, Global } from '@nestjs/common';
-import { RMQ_APP_OPTIONS, RMQ_CONNECT_OPTIONS } from './constants';
+import { RMQ_APP_OPTIONS, RMQ_CONNECT_OPTIONS, SERDES } from './constants';
 import {
   IRabbitMQConfigAsync,
   IRabbitMQConfig,
@@ -7,6 +7,7 @@ import {
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { RmqGlobalService } from './rmq.global.service';
+import { serDes } from './common';
 
 @Global()
 @Module({})
@@ -20,6 +21,7 @@ export class RmqNestjsCoreModule {
       providers: [
         { provide: RMQ_CONNECT_OPTIONS, useValue: configOptions },
         { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
+        { provide: SERDES, useValue: serDes },
         RmqNestjsConnectService,
         RmqGlobalService,
       ],
@@ -41,6 +43,7 @@ export class RmqNestjsCoreModule {
           inject: configOptions.inject || [],
         },
         { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
+        { provide: SERDES, useValue: serDes },
         RmqNestjsConnectService,
         RmqGlobalService,
       ],

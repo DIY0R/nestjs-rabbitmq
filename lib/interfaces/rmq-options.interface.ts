@@ -27,11 +27,15 @@ export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (...args: any[]) => Promise<IRabbitMQConfig> | IRabbitMQConfig;
   inject?: any[];
 }
-
+export interface ISerDes {
+  deserialize: (message: Buffer) => any;
+  serializer: (message: any) => Buffer;
+}
 export interface IMessageBroker {
   exchange: IExchange;
   replyTo?: IQueue;
   queue?: IQueue;
+  serDes?: ISerDes;
   messageTimeout?: number;
   serviceName?: string;
 }
@@ -45,7 +49,7 @@ export interface IBindQueue {
 export interface ISendMessage {
   exchange: string;
   routingKey: string;
-  content: Record<string, any>;
+  content: Buffer;
   options: Options.Publish;
 }
 export interface IPublishOptions extends Options.Publish {
@@ -54,7 +58,7 @@ export interface IPublishOptions extends Options.Publish {
 
 export interface ISendToReplyQueueOptions {
   replyTo: string;
-  content: Record<string, any>;
+  content: Buffer;
   correlationId: string;
   options?: Options.Publish;
 }
@@ -69,6 +73,7 @@ export interface IGlobalBroker {
   replyTo: IQueue;
   messageTimeout?: number;
   serviceName?: string;
+  serDes?: ISerDes;
 }
 
 export interface ISocketOptions {

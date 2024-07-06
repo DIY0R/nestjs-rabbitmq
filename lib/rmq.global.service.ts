@@ -10,6 +10,7 @@ import {
   IGlobalOptions,
   INotifyReply,
   IPublishOptions,
+  ISerDes,
   TypeChanel,
   TypeQueue,
 } from './interfaces';
@@ -19,9 +20,10 @@ import {
   INDICATE_REPLY_QUEUE,
   NACKED,
   RMQ_APP_OPTIONS,
+  SERDES,
   TIMEOUT_ERROR,
 } from './constants';
-import { Inject, Logger, LoggerService, OnModuleInit } from '@nestjs/common';
+import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
 import { getUniqId } from './common';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
@@ -36,6 +38,7 @@ export class RmqGlobalService implements OnModuleInit {
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
+    @Inject(SERDES) private readonly serDes: ISerDes,
   ) {
     this.logger = globalOptions.appOptions?.logger
       ? globalOptions.appOptions.logger
@@ -61,7 +64,7 @@ export class RmqGlobalService implements OnModuleInit {
       this.sendResponseEmitter.once(correlationId, (msg: Message) => {
         clearTimeout(timerId);
         const { content } = msg;
-        if (content.toString()) resolve(JSON.parse(content.toString()));
+        if (content.toString()) resolve(this.serDes.deserialize(content));
       });
       const confirmationFunction = (err: any, ok: Replies.Empty) => {
         if (err) {
@@ -74,7 +77,7 @@ export class RmqGlobalService implements OnModuleInit {
         {
           exchange: exchange,
           routingKey: topic,
-          content: message,
+          content: this.serDes.serializer(message),
           options: {
             replyTo: this.replyToQueue.queue,
             appId: serviceName,
@@ -103,7 +106,7 @@ export class RmqGlobalService implements OnModuleInit {
         {
           exchange,
           routingKey: topic,
-          content: message,
+          content: this.serDes.serializer(message),
           options: {
             appId: this.globalOptions.globalBroker.serviceName,
             timestamp: new Date().getTime(),
@@ -118,9 +121,15 @@ export class RmqGlobalService implements OnModuleInit {
   }
 
   public sendToQueue<IMessage>(
-    ...args: [string, IMessage, Options.Publish?]
+    queue: string,
+    content: IMessage,
+    options?: Options.Publish,
   ): boolean {
-    const status = this.rmqNestjsConnectService.sendToQueue(...args);
+    const status = this.rmqNestjsConnectService.sendToQueue(
+      queue,
+      this.serDes.serializer(content),
+      options,
+    );
     return status;
   }
 

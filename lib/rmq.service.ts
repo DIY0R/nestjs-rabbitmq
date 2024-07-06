@@ -10,6 +10,7 @@ import {
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
+  ISerDes,
   TypeChanel,
   TypeQueue,
 } from './interfaces';
@@ -30,6 +31,7 @@ import {
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
   RMQ_MESSAGE_META_TEG,
+  SERDES,
   TIMEOUT_ERROR,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
@@ -52,8 +54,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
-    @Inject(RMQ_BROKER_OPTIONS) private options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
+    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
+    @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
+    @Inject(SERDES) private readonly serDes: ISerDes,
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
     this.logger = globalOptions.appOptions?.logger
@@ -87,7 +90,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         {
           exchange: this.options.exchange.exchange,
           routingKey: topic,
-          content: message,
+          content: this.serDes.serializer(message),
           options: {
             appId: this.options.serviceName,
             timestamp: new Date().getTime(),
@@ -143,7 +146,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           }
           const content = msg.content;
           if (content.toString()) {
-            resolve(JSON.parse(content.toString()));
+            resolve(this.serDes.deserialize(content));
           } else {
             this.logger.error(EMPTY_MESSAGE, {
               correlationId,
@@ -161,7 +164,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           {
             exchange: this.options.exchange.exchange,
             routingKey: topic,
-            content: message,
+            content: this.serDes.serializer(message),
             options: {
               replyTo: this.replyToQueue.queue,
               appId: this.options.serviceName,
@@ -182,7 +185,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     try {
-      const messageParse = JSON.parse(message.content.toString());
+      const messageParse = this.serDes.deserialize(message.content);
       if (!message) throw new Error('Received null message');
       const route = this.getRouteByTopic(message.fields.routingKey);
       const consumeFunction =
@@ -198,7 +201,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       if (message.properties.replyTo) {
         await this.rmqNestjsConnectService.sendToReplyQueue({
           replyTo: message.properties.replyTo,
-          content: result,
+          content: this.serDes.serializer(result),
           correlationId: message.properties.correlationId,
         });
       }

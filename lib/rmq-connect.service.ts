@@ -128,7 +128,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       await this.initializationCheck();
       this.replyToChannel.sendToQueue(
         sendToQueueOptions.replyTo,
-        Buffer.from(JSON.stringify(sendToQueueOptions.content)),
+        sendToQueueOptions.content,
         {
           correlationId: sendToQueueOptions.correlationId,
         },
@@ -181,7 +181,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       this.baseChannel.publish(
         sendMessage.exchange,
         sendMessage.routingKey,
-        Buffer.from(JSON.stringify(sendMessage.content)),
+        sendMessage.content,
         {
           replyTo: sendMessage.options.replyTo,
           correlationId: sendMessage.options.correlationId,
@@ -221,17 +221,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  sendToQueue<IMessage>(
+  sendToQueue(
     queue: string,
-    message: IMessage,
+    content: Buffer,
     options?: Options.Publish,
   ): boolean {
     try {
-      return this.baseChannel.sendToQueue(
-        queue,
-        Buffer.from(JSON.stringify(message)),
-        options,
-      );
+      return this.baseChannel.sendToQueue(queue, content, options);
     } catch (error) {
       throw new Error(`Failed to send message ${error}`);
     }
