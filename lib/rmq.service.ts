@@ -36,7 +36,7 @@ import {
   TIMEOUT_ERROR,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
-import { MetaTegsScannerService } from './common';
+import { MetaTegsScannerService, toRegex } from './common';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
@@ -314,16 +314,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
   private getRouteByTopic(topic: string): string {
     for (const route of this.rmqMessageTegs.keys()) {
-      if (route === topic) {
-        return route;
-      }
-      const regexString =
-        '^' +
-        route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\\.?)+') +
-        '$';
-      if (topic.search(new RegExp(regexString)) !== -1) {
-        return route;
-      }
+      const regex = toRegex(route);
+      const isMatch = regex.test(topic);
+      if (isMatch) return route;
     }
     return '';
   }

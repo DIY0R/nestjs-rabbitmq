@@ -4,3 +4,4 @@ export * from './rmq-intercepter';
 export * from './rmq-pipe';
 export * from './logger';
 export * from './serdes';
+export * from './toRegex';
