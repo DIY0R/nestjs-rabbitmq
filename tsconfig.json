@@ -21,7 +21,11 @@
   },
   "include": [
     "lib/**/*",
-    "test/**/*"
+    "test/**/*",
+    "./"
+  ],
+  "ignorePatterns": [
+    "commitlint.config.js"
   ],
   "exclude": [
     "node_modules"
