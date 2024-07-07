@@ -25,11 +25,6 @@ import { RmqServieController } from './rmq.controller';
         options: { exclusive: true },
         consumOptions: { noAck: true },
       },
-      serDes: {
-        deserialize: (message: Buffer): any => JSON.parse(message.toString()),
-        serializer: (message: any): Buffer =>
-          Buffer.from(JSON.stringify(message)),
-      },
     }),
   ],
   providers: [RmqEvents, RmqServieController],

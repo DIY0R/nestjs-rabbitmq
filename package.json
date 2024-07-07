@@ -59,6 +59,9 @@
     "rabbitMQ",
     "amqplib",
     "typescript",
+    "amqplib-nestjs",
+    "rabbitmq-nestjs",
+    "nestjs-rmq",
     "node.js"
   ],
   "repository": {

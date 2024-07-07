@@ -102,6 +102,13 @@ describe('RMQe2e', () => {
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
+
+    it('send mix topic pattern #3 "*#"', async () => {
+      const obj = { time: 1 };
+      const topic = 'text.rpc.mix.pool.too';
+      const { message } = await rmqServieController.sendMessage(obj, topic);
+      expect(message).toEqual(obj);
+    });
   });
   describe('send message to queue', () => {
     it('send to Queue', () => {

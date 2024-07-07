@@ -22,14 +22,19 @@ export class RmqEvents {
     serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
   })
   recivedTopic(obj: any, consumeMessage: ConsumeMessage) {
-    
+    this.rmqServie.ack(consumeMessage);
+    return { message: obj };
+  }
+
+  @MessageRoute('*.rpc.mix.#')
+  recivedMixTopic(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
     return { message: obj };
   }
   @MessageRoute('global.rpc')
   recivedGlobal(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
- 
+
     return { message: obj };
   }
   @MessageRoute('rpc.#')
