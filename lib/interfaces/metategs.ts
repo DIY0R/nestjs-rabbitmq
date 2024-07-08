@@ -13,3 +13,5 @@ export type IMetaTegsMap = Map<string, MetaTegEnpoint>;
 export interface IDescriptor {
   value?: IConsumFunction;
 }
+
+export type CallbackFunctionVariadic = (...args: any[]) => any;

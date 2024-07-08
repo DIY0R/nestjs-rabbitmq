@@ -4,6 +4,10 @@ import { RmqService } from '../../lib';
 import { ConsumeMessage } from 'amqplib';
 
 @Injectable()
+@SerDes({
+  deserialize: (message: Buffer): any => JSON.parse(message.toString()),
+  serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
+})
 export class RmqEvents {
   constructor(private readonly rmqServie: RmqService) {}
   @MessageRoute('text.text')
@@ -34,7 +38,6 @@ export class RmqEvents {
   @MessageRoute('global.rpc')
   recivedGlobal(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
-
     return { message: obj };
   }
   @MessageRoute('rpc.#')
