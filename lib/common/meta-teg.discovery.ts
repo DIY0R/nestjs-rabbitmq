@@ -1,15 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Type } from '@nestjs/common';
 import { ModulesContainer, Reflector } from '@nestjs/core';
 import { MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { MESSAGE_ROUTER, MODULE_TOKEN, SER_DAS_KEY } from '../constants';
-import { IMetaTegsMap, ISerDes } from '../interfaces';
+import { CallbackFunctionVariadic, IMetaTegsMap, ISerDes } from '../interfaces';
 import { RQMColorLogger } from './logger';
 import { Module } from '@nestjs/core/injector/module';
 
 @Injectable()
 export class MetaTegsScannerService {
-  logger = new RQMColorLogger(false);
+  private logger = new RQMColorLogger(false);
   constructor(
     private readonly metadataScanner: MetadataScanner,
     private readonly reflector: Reflector,
@@ -26,10 +26,9 @@ export class MetaTegsScannerService {
     return null;
   }
   public scan(metaTeg: string, tokenValue: string) {
-    const rmqMessagesMap = new Map();
+    const rmqMessagesMap: IMetaTegsMap = new Map();
     const currentModule = this.findModulesByProviderValue(tokenValue);
     if (!currentModule) return rmqMessagesMap;
-
     const providersAndControllers =
       this.getProvidersAndControllers(currentModule);
 
@@ -55,12 +54,21 @@ export class MetaTegsScannerService {
     methodName: string,
   ) {
     const method = instance[methodName];
-    const event = this.reflector.get<string>(metaTeg, method);
+    const event = this.getMetaData<string>(metaTeg, method);
     const boundHandler = instance[methodName].bind(instance);
     if (event) {
-      const serdes = this.reflector.get<ISerDes>(SER_DAS_KEY, method);
+      const serdes = this.getSerDesMetaData(method, instance.constructor);
       rmqMessagesMap.set(event, { handler: boundHandler, serdes });
       this.logger.log('Mapped ' + event, MESSAGE_ROUTER);
     }
+  }
+  private getSerDesMetaData(method: CallbackFunctionVariadic, target: object) {
+    return (
+      this.getMetaData<ISerDes>(SER_DAS_KEY, method) ||
+      this.getMetaData<ISerDes>(SER_DAS_KEY, target)
+    );
+  }
+  private getMetaData<T>(key: string, target: any) {
+    return this.reflector.get<T>(key, target);
   }
 }
