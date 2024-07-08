@@ -23,7 +23,7 @@ export class RmqNestjsCoreModule {
         { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
         {
           provide: SERDES,
-          useValue: globalOptions.globalBroker.serDes ?? serDes,
+          useValue: globalOptions?.globalBroker?.serDes ?? serDes,
         },
         RmqNestjsConnectService,
         RmqGlobalService,
@@ -48,7 +48,7 @@ export class RmqNestjsCoreModule {
         { provide: RMQ_APP_OPTIONS, useValue: globalOptions || {} },
         {
           provide: SERDES,
-          useValue: globalOptions.globalBroker.serDes ?? serDes,
+          useValue: globalOptions?.globalBroker?.serDes ?? serDes,
         },
         RmqNestjsConnectService,
         RmqGlobalService,

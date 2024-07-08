@@ -18,6 +18,7 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
   DEFAULT_TIMEOUT,
   INDICATE_REPLY_QUEUE,
+  INDICATE_REPLY_QUEUE_GLOBAL,
   INITIALIZATION_STEP_DELAY,
   NACKED,
   RMQ_APP_OPTIONS,
@@ -56,41 +57,45 @@ export class RmqGlobalService implements OnModuleInit {
     message: IMessage,
     options?: IPublishOptions,
   ): Promise<IReply> {
-    if (!this.replyToQueue) return this.logger.error(INDICATE_REPLY_QUEUE);
-    await this.initializationCheck();
-    const { messageTimeout, serviceName } = this.globalOptions.globalBroker;
-    return new Promise<IReply>(async (resolve, reject) => {
-      const correlationId = getUniqId();
-      const timeout = options?.timeout ?? messageTimeout ?? DEFAULT_TIMEOUT;
-      const timerId = setTimeout(() => reject(TIMEOUT_ERROR), timeout);
-      this.sendResponseEmitter.once(correlationId, (msg: Message) => {
-        clearTimeout(timerId);
-        const { content } = msg;
-        if (content.toString()) resolve(this.serDes.deserialize(content));
-      });
-      const confirmationFunction = (err: any, ok: Replies.Empty) => {
-        if (err) {
+    try {
+      if (!this.replyToQueue) throw Error(INDICATE_REPLY_QUEUE_GLOBAL);
+      await this.initializationCheck();
+      const { messageTimeout, serviceName } = this.globalOptions.globalBroker;
+      return new Promise<IReply>(async (resolve, reject) => {
+        const correlationId = getUniqId();
+        const timeout = options?.timeout ?? messageTimeout ?? DEFAULT_TIMEOUT;
+        const timerId = setTimeout(() => reject(TIMEOUT_ERROR), timeout);
+        this.sendResponseEmitter.once(correlationId, (msg: Message) => {
           clearTimeout(timerId);
-          reject(NACKED);
-        }
-      };
+          const { content } = msg;
+          if (content.toString()) resolve(this.serDes.deserialize(content));
+        });
+        const confirmationFunction = (err: any, ok: Replies.Empty) => {
+          if (err) {
+            clearTimeout(timerId);
+            reject(NACKED);
+          }
+        };
 
-      await this.rmqNestjsConnectService.publish(
-        {
-          exchange: exchange,
-          routingKey: topic,
-          content: this.serDes.serializer(message),
-          options: {
-            replyTo: this.replyToQueue.queue,
-            appId: serviceName,
-            correlationId,
-            timestamp: new Date().getTime(),
-            ...options,
+        await this.rmqNestjsConnectService.publish(
+          {
+            exchange: exchange,
+            routingKey: topic,
+            content: this.serDes.serializer(message),
+            options: {
+              replyTo: this.replyToQueue.queue,
+              appId: serviceName,
+              correlationId,
+              timestamp: new Date().getTime(),
+              ...options,
+            },
           },
-        },
-        confirmationFunction,
-      );
-    });
+          confirmationFunction,
+        );
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   public notify<IMessage>(
@@ -110,14 +115,14 @@ export class RmqGlobalService implements OnModuleInit {
           routingKey: topic,
           content: this.serDes.serializer(message),
           options: {
-            appId: this.globalOptions.globalBroker.serviceName,
+            appId: this.globalOptions?.globalBroker?.serviceName ?? '',
             timestamp: new Date().getTime(),
             ...options,
           },
         },
         confirmationFunction,
       );
-      if (this.globalOptions.typeChanel !== TypeChanel.CONFIR_CHANEL)
+      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIR_CHANEL)
         resolve({ status: 'ok' });
     });
   }
