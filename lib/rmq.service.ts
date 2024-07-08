@@ -14,7 +14,11 @@ import {
   TypeChanel,
   TypeQueue,
 } from './interfaces';
-import { IMetaTegsMap, MetaTegEnpoint } from './interfaces/metategs';
+import {
+  IConsumFunction,
+  IMetaTegsMap,
+  MetaTegEnpoint,
+} from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
   EMPTY_MESSAGE,
@@ -183,7 +187,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     try {
       if (!message) throw new Error('Received null message');
-
       const route = this.getRouteByTopic(message.fields.routingKey);
 
       const consumer = this.getConsumer(route);
@@ -213,15 +216,15 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     return this.rmqMessageTegs.get(route) || this.rmqMessageTegs.get(NON_ROUTE);
   }
 
-  private deserializeMessage(consumer: any, content: Buffer) {
+  private deserializeMessage(consumer: MetaTegEnpoint, content: Buffer) {
     return consumer.serdes?.deserialize
       ? consumer.serdes.deserialize(content)
       : this.serDes.deserialize(content);
   }
 
   private async handleMessage(
-    handler: any,
-    messageParse: any,
+    handler: IConsumFunction,
+    messageParse: string,
     message: ConsumeMessage,
   ) {
     const result = await handler(messageParse, message);
@@ -230,7 +233,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async sendReply(
     replyTo: string,
-    consumer: any,
+    consumer: MetaTegEnpoint,
     result: any,
     correlationId: string,
   ) {
