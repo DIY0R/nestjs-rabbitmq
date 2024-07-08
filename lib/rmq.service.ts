@@ -103,7 +103,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         },
         confirmationFunction,
       );
-      if (this.globalOptions.typeChanel !== TypeChanel.CONFIR_CHANEL)
+      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIR_CHANEL)
         resolve({ status: 'ok' });
     });
   }
@@ -112,7 +112,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       this.options.exchange,
     );
     if (this.options.replyTo) await this.assertReplyQueue();
-    await this.bindQueueExchange();
+    if (this.options?.queue) await this.bindQueueExchange();
   }
   public async send<IMessage, IReply>(
     topic: string,
@@ -120,26 +120,19 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     options?: IPublishOptions,
   ): Promise<IReply> {
     await this.initializationCheck();
-    if (!this.replyToQueue) {
-      this.logger.error(INDICATE_REPLY_QUEUE);
-      throw new Error(INDICATE_REPLY_QUEUE);
-    }
-    return new Promise<IReply>(async (resolve, reject) => {
-      if (!message) {
-        this.logger.error(MESSAGE_NON);
-        throw new Error(MESSAGE_NON);
-      }
-      const correlationId = getUniqId();
-      const timeout =
-        options?.timeout ?? this.options.messageTimeout ?? DEFAULT_TIMEOUT;
+    const correlationId = getUniqId();
+    const timeout =
+      options?.timeout ?? this.options.messageTimeout ?? DEFAULT_TIMEOUT;
+    const timerId = setTimeout(() => {
+      this.logger.error(`Message timed out after ${timeout}ms`, {
+        correlationId,
+      });
+      throw new Error(TIMEOUT_ERROR);
+    }, timeout);
 
-      const timerId = setTimeout(() => {
-        this.logger.error(`Message timed out after ${timeout}ms`, {
-          correlationId,
-        });
-        reject(new Error(TIMEOUT_ERROR));
-      }, timeout);
+    return new Promise<IReply>(async (resolve, reject) => {
       try {
+        if (!this.replyToQueue) throw Error(INDICATE_REPLY_QUEUE);
         this.sendResponseEmitter.once(correlationId, (msg: Message) => {
           clearTimeout(timerId);
           if (msg.properties?.headers?.['-x-error']) {

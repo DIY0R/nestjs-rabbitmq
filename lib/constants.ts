@@ -15,6 +15,8 @@ export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 export const NON_ROUTE = 'non_route_one';
 
 export const INDICATE_REPLY_QUEUE = 'Please indicate `replyToQueue`';
+export const INDICATE_REPLY_QUEUE_GLOBAL =
+  'Please indicate `replyToQueue` in globalBroker';
 export const TIMEOUT_ERROR = 'Response timeout error';
 export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
 export const ERROR_RMQ_SERVICE = 'Rmq service error';
