@@ -26,7 +26,6 @@ import {
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
   INOF_NOT_FULL_OPTIONS,
-  MESSAGE_NON,
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
@@ -35,7 +34,6 @@ import {
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
   RMQ_MESSAGE_META_TEG,
-  SER_DAS_KEY,
   SERDES,
   TIMEOUT_ERROR,
 } from './constants';
@@ -45,7 +43,6 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
-import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
@@ -60,7 +57,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
-    private readonly reflector: Reflector,
 
     @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
     @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,

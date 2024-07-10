@@ -1,6 +1,7 @@
 import { Options } from 'amqplib';
 import { LoggerService, ModuleMetadata } from '@nestjs/common';
-import { RMQIntercepterClass, RMQPipeClass } from 'lib/common';
+import { RMQIntercepterClass, RMQPipeClass } from '../common';
+import { ISerDes } from './serdes.interface';
 
 export interface IQueue {
   queue: string;
@@ -27,10 +28,7 @@ export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (...args: any[]) => Promise<IRabbitMQConfig> | IRabbitMQConfig;
   inject?: any[];
 }
-export interface ISerDes {
-  deserialize: (message: Buffer) => any;
-  serializer: (message: any) => Buffer;
-}
+
 export interface IMessageBroker {
   exchange: IExchange;
   replyTo?: IQueue;

@@ -1,5 +1,5 @@
 import { ConsumeMessage } from 'amqplib';
-import { ISerDes } from './rmq-options.interface';
+import { ISerDes } from './serdes.interface';
 
 export type IConsumFunction = (
   message?: any,
