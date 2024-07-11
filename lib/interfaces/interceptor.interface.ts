@@ -1,11 +1,13 @@
 import { ConsumeMessage } from 'amqplib';
 
-export type ReverseFunction = (message: ConsumeMessage, content: any) => any;
-export type NextFunction = (reverseFn: ReverseFunction) => void;
+export type ReverseFunction = (
+  content: any,
+  message: ConsumeMessage,
+) => Promise<void>;
 export abstract class IRmqInterceptor {
   abstract intercept(
-    message: ConsumeMessage,
     content: any,
-    next: NextFunction,
-  ): void;
+    message: ConsumeMessage,
+  ): Promise<ReverseFunction>;
 }
+export type TypeRmqInterceptor = typeof IRmqInterceptor;

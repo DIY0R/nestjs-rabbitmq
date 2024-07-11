@@ -1,9 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef, ModulesContainer, Reflector } from '@nestjs/core';
+import { ModulesContainer, Reflector } from '@nestjs/core';
 import { MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
-import { MESSAGE_ROUTER, MODULE_TOKEN, SER_DAS_KEY } from '../constants';
-import { CallbackFunctionVariadic, IMetaTegsMap, ISerDes } from '../interfaces';
+import {
+  INTERCEPTOR_KEY,
+  MESSAGE_ROUTER,
+  MODULE_TOKEN,
+  SER_DAS_KEY,
+} from '../constants';
+import {
+  CallbackFunctionVariadic,
+  IMetaTegsMap,
+  ISerDes,
+  TypeRmqInterceptor,
+} from '../interfaces';
 import { RQMColorLogger } from './logger';
 import { Module } from '@nestjs/core/injector/module';
 
@@ -35,7 +45,6 @@ export class MetaTegsScannerService {
       const { instance } = provider;
       if (instance instanceof Object) {
         const allMethodNames = this.metadataScanner.getAllMethodNames(instance);
-
         allMethodNames.forEach((name: string) =>
           this.lookupMethods(metaTeg, rmqMessagesMap, instance, name),
         );
@@ -58,7 +67,15 @@ export class MetaTegsScannerService {
     const boundHandler = instance[methodName].bind(instance);
     if (event) {
       const serdes = this.getSerDesMetaData(method, instance.constructor);
-      rmqMessagesMap.set(event, { handler: boundHandler, serdes });
+      const interceptors = this.getInterceptorMetaData(
+        method,
+        instance.constructor,
+      );
+      rmqMessagesMap.set(event, {
+        handler: boundHandler,
+        serdes,
+        interceptors,
+      });
       this.logger.log('Mapped ' + event, MESSAGE_ROUTER);
     }
   }
@@ -67,6 +84,20 @@ export class MetaTegsScannerService {
       this.getMetaData<ISerDes>(SER_DAS_KEY, method) ||
       this.getMetaData<ISerDes>(SER_DAS_KEY, target)
     );
+  }
+  private getInterceptorMetaData(
+    method: CallbackFunctionVariadic,
+    target: object,
+  ): TypeRmqInterceptor[] {
+    const methodMeta = this.getMetaData<TypeRmqInterceptor>(
+      INTERCEPTOR_KEY,
+      method,
+    );
+    const targetMeta = this.getMetaData<TypeRmqInterceptor>(
+      INTERCEPTOR_KEY,
+      target,
+    );
+    return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
   }
   private getMetaData<T>(key: string, target: any) {
     return this.reflector.get<T>(key, target);

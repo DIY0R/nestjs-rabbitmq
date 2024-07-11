@@ -43,6 +43,7 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
+import { rejects } from 'assert';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
@@ -184,9 +185,15 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     try {
       if (!message) throw new Error('Received null message');
       const route = this.getRouteByTopic(message.fields.routingKey);
-
       const consumer = this.getConsumer(route);
       const messageParse = this.deserializeMessage(consumer, message.content);
+      const interceptors = this.getInterceptors(consumer);
+      const interceptorsReversed = await this.interceptorsReverse(
+        interceptors,
+        message,
+        messageParse,
+      );
+
       let result = { error: ERROR_NO_ROUTE };
       if (consumer.handler)
         result = await this.handleMessage(
@@ -194,7 +201,11 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           messageParse,
           message,
         );
-
+      await Promise.all(
+        interceptorsReversed
+          .reverse()
+          .map(async (revers) => await revers(result, message)),
+      );
       if (message.properties.replyTo)
         await this.sendReply(
           message.properties.replyTo,
@@ -204,8 +215,17 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         );
     } catch (error) {
       this.logger.error('Error processing message', { error, message });
+
       this.rmqNestjsConnectService.nack(message, false, false);
     }
+  }
+  private async interceptorsReverse(interceptors, message, messageParse) {
+    const interceptorsReversed: any[] = [];
+    for (const interceptor of interceptors) {
+      const fnReversed = await interceptor.intercept(message, messageParse);
+      interceptorsReversed.push(fnReversed);
+    }
+    return interceptorsReversed;
   }
 
   private getConsumer(route: string): MetaTegEnpoint {
@@ -217,7 +237,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       ? consumer.serdes.deserialize(content)
       : this.serDes.deserialize(content);
   }
-
+  private getInterceptors(consumer: MetaTegEnpoint) {
+    return consumer.interceptors.map((interceptor: any) => new interceptor());
+  }
   private async handleMessage(
     handler: IConsumFunction,
     messageParse: string,
@@ -245,9 +267,8 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   private async listenReplyQueue(
     message: ConsumeMessage | null,
   ): Promise<void> {
-    if (message.properties.correlationId) {
+    if (message.properties.correlationId)
       this.sendResponseEmitter.emit(message.properties.correlationId, message);
-    }
   }
 
   private async bindQueueExchange() {
