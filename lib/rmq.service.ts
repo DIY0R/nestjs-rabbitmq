@@ -13,6 +13,7 @@ import {
   ISerDes,
   TypeChanel,
   TypeQueue,
+  TypeRmqInterceptor,
 } from './interfaces';
 import {
   IConsumFunction,
@@ -26,6 +27,7 @@ import {
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
   INOF_NOT_FULL_OPTIONS,
+  INTERCEPTORS,
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
@@ -62,6 +64,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
     @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
     @Inject(SERDES) private readonly serDes: ISerDes,
+    @Inject(INTERCEPTORS) private readonly interceptors: TypeRmqInterceptor[],
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
     this.logger = globalOptions.appOptions?.logger
@@ -238,7 +241,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       : this.serDes.deserialize(content);
   }
   private getInterceptors(consumer: MetaTegEnpoint) {
-    return consumer.interceptors.map((interceptor: any) => new interceptor());
+    return this.interceptors
+      .concat(consumer.interceptors)
+      .map((interceptor: any) => new interceptor());
   }
   private async handleMessage(
     handler: IConsumFunction,

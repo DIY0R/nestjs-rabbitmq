@@ -7,6 +7,7 @@ export const TARGET_MODULE = 'TARGET_MODULE';
 export const SER_DAS_KEY = 'SER_DAS_KEY';
 export const INTERCEPTOR_KEY = 'INTERCEPTOR_KEY';
 export const SERDES = 'SERDES';
+export const INTERCEPTORS = 'INTERCEPTORS';
 
 export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;
