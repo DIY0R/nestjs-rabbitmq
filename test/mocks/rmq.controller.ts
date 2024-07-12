@@ -15,6 +15,16 @@ export class RmqServieController {
     );
     return sendhi;
   }
+  async sendMessageWithInterceptor(
+    obj: Record<string, any>,
+    topic: string = 'text.interceptor',
+  ) {
+    const sendhi = await this.rmqServie.send<object, { array: number[] }>(
+      topic,
+      obj,
+    );
+    return sendhi;
+  }
 
   async sendGlobalRoute(obj: Record<string, any>) {
     const message = await this.rmqGlobalService.send<
