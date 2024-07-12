@@ -117,6 +117,18 @@ describe('RMQe2e', () => {
       expect(status).toBeTruthy();
     });
   });
+
+  describe('send message with interceptors', () => {
+    it('send with interceptors', async () => {
+      const obj = { array: [0] };
+      const topic = 'text.interceptor';
+      const message = await rmqServieController.sendMessageWithInterceptor(
+        obj,
+        topic,
+      );
+      expect(message.array).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    });
+  });
   afterAll(async () => {
     await delay(500);
     await api.close();

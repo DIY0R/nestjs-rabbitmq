@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RmqNestjsModule } from '../../lib';
 import { RmqEvents } from './rmq.event';
 import { RmqServieController } from './rmq.controller';
+import { EventInterceptorModule } from './event.interceptor';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RmqServieController } from './rmq.controller';
         options: { exclusive: true },
         consumOptions: { noAck: true },
       },
+      interceptor: [EventInterceptorModule],
     }),
   ],
   providers: [RmqEvents, RmqServieController],

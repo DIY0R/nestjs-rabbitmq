@@ -2,6 +2,7 @@ import { Options } from 'amqplib';
 import { LoggerService, ModuleMetadata } from '@nestjs/common';
 import { RMQIntercepterClass, RMQPipeClass } from '../common';
 import { ISerDes } from './serdes.interface';
+import { TypeRmqInterceptor } from './interceptor.interface';
 
 export interface IQueue {
   queue: string;
@@ -34,6 +35,7 @@ export interface IMessageBroker {
   replyTo?: IQueue;
   queue?: IQueue;
   serDes?: ISerDes;
+  interceptor?: TypeRmqInterceptor[];
   messageTimeout?: number;
   serviceName?: string;
 }
