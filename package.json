@@ -54,15 +54,14 @@
     "@nestjs/common": "^10.0.0"
   },
   "keywords": [
-    "rmq",
-    "nestjs",
-    "rabbitMQ",
+    "RMQ",
+    "Nestjs",
+    "RabbitMQ",
     "amqplib",
-    "typescript",
     "amqplib-nestjs",
     "rabbitmq-nestjs",
     "nestjs-rmq",
-    "node.js"
+    "nodejs"
   ],
   "repository": {
     "type": "git",
