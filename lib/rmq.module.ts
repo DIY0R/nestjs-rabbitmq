@@ -17,14 +17,16 @@ import { MetaTegsScannerService, getUniqId } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
 import { serDes } from './common';
 
-@Module({})
-export class RmqNestjsModule {
+@Module({
+  providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
+})
+export class RmqModule {
   static forRoot(
     configOptions: IRabbitMQConfig,
     globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
-      module: RmqNestjsModule,
+      module: RmqModule,
       imports: [RmqNestjsCoreModule.forRoot(configOptions, globalOptions)],
     };
   }
@@ -33,19 +35,19 @@ export class RmqNestjsModule {
     globalOptions?: IGlobalOptions,
   ): DynamicModule {
     return {
-      module: RmqNestjsModule,
+      module: RmqModule,
       imports: [RmqNestjsCoreModule.forRootAsync(configOptions, globalOptions)],
     };
   }
+
   static forFeature(options: IMessageBroker): DynamicModule {
     return {
-      module: RmqNestjsModule,
+      module: RmqModule,
       imports: [DiscoveryModule],
       providers: [
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
         { provide: SERDES, useValue: options.serDes ?? serDes },
         { provide: INTERCEPTORS, useValue: options.interceptor ?? [] },
-        { provide: MODULE_TOKEN, useFactory: getUniqId },
         RmqService,
         MetaTegsScannerService,
       ],

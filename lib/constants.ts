@@ -8,14 +8,16 @@ export const SER_DAS_KEY = 'SER_DAS_KEY';
 export const INTERCEPTOR_KEY = 'INTERCEPTOR_KEY';
 export const SERDES = 'SERDES';
 export const INTERCEPTORS = 'INTERCEPTORS';
+export const MESSAGE_ROUTER = 'MessageRouterExplorer';
+export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 
+export const CLOSE_EVENT = 'close';
+export const CONNECT_ERROR = 'error';
+export const CONNECT_BLOCKED = 'blocked';
 export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;
 
-export const MESSAGE_ROUTER = 'MessageRouterExplorer';
-export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 export const NON_ROUTE = 'non_route_one';
-
 export const INDICATE_REPLY_QUEUE = 'Please indicate `replyToQueue`';
 export const INDICATE_REPLY_QUEUE_GLOBAL =
   'Please indicate `replyToQueue` in globalBroker';
@@ -34,6 +36,3 @@ export const CLOSE_MESSAGE = 'Disconnected from RMQ. Trying to reconnect';
 export const CONNECT_FAILED_MESSAGE = 'Failed to connect to RMQ';
 export const WRONG_CREDENTIALS_MESSAGE = 'Wrong credentials for RMQ';
 export const CONNECT_BLOCKED_MESSAGE = 'Connection blocked';
-export const CLOSE_EVENT = 'close';
-export const CONNECT_ERROR = 'error';
-export const CONNECT_BLOCKED = 'blocked';

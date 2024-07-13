@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { RmqServieController } from './mocks/rmq.controller';
-import { RmqNestjsModule, RmqService, TypeChanel } from '../lib';
+import { RmqModule, RmqService, TypeChanel } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 import { RETURN_NOTHING } from '../lib/constants';
 
@@ -12,7 +12,7 @@ describe('RMQe2e', () => {
   beforeAll(async () => {
     const apiModule = await Test.createTestingModule({
       imports: [
-        RmqNestjsModule.forRoot(
+        RmqModule.forRoot(
           {
             username: 'for-test',
             password: 'for-test',

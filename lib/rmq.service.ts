@@ -45,7 +45,6 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
-import { rejects } from 'assert';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
