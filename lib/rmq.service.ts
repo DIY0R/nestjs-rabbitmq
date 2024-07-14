@@ -82,39 +82,12 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   public healthCheck() {
     return this.rmqNestjsConnectService.isConnected;
   }
-  public async notify<IMessage>(
-    topic: string,
-    message: IMessage,
-    options?: Options.Publish,
-  ): Promise<INotifyReply> {
-    await this.initializationCheck();
-    return new Promise(async (resolve, reject) => {
-      const confirmationFunction = (err: any, ok: Replies.Empty) => {
-        if (err !== null) return reject(NACKED);
-        resolve({ status: 'ok' });
-      };
-      await this.rmqNestjsConnectService.publish(
-        {
-          exchange: this.options.exchange.exchange,
-          routingKey: topic,
-          content: this.serDes.serializer(message),
-          options: {
-            appId: this.options.serviceName,
-            timestamp: new Date().getTime(),
-            ...options,
-          },
-        },
-        confirmationFunction,
-      );
-      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIR_CHANEL)
-        resolve({ status: 'ok' });
-    });
-  }
+
   private async init() {
     this.exchange = await this.rmqNestjsConnectService.assertExchange(
       this.options.exchange,
     );
-    if (this.options.replyTo) await this.assertReplyQueue();
+    if (this.options?.replyTo) await this.assertReplyQueue();
     if (this.options?.queue) await this.bindQueueExchange();
   }
   public async send<IMessage, IReply>(
@@ -179,6 +152,45 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         clearTimeout(timerId);
         this.logger.error('Error publishing message', { correlationId, error });
         reject(error);
+      }
+    });
+  }
+  public async notify<IMessage>(
+    topic: string,
+    message: IMessage,
+    options?: Options.Publish,
+  ): Promise<INotifyReply> {
+    await this.initializationCheck();
+
+    return new Promise<INotifyReply>(async (resolve, reject) => {
+      try {
+        const confirmationFunction = (err: any, ok: Replies.Empty) => {
+          if (err !== null) {
+            this.logger.error(`Publish failed: ${err.message}`);
+            return reject(NACKED);
+          }
+          resolve({ status: 'ok' });
+        };
+
+        await this.rmqNestjsConnectService.publish(
+          {
+            exchange: this.options.exchange.exchange,
+            routingKey: topic,
+            content: this.serDes.serializer(message),
+            options: {
+              appId: this.options.serviceName,
+              timestamp: new Date().getTime(),
+              ...options,
+            },
+          },
+          confirmationFunction,
+        );
+
+        if (this.globalOptions?.typeChanel !== TypeChanel.CONFIRM_CHANEL)
+          resolve({ status: 'ok' });
+      } catch (err) {
+        this.logger.error(`Notify error: ${err.message}`);
+        reject(err);
       }
     });
   }

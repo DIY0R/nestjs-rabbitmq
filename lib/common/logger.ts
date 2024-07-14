@@ -10,8 +10,8 @@ export class RQMColorLogger implements LoggerService {
   log(message: any, context?: string): any {
     Logger.log(message, context);
   }
-  error(message: any, trace?: string, context?: string): any {
-    Logger.error(message);
+  error(message: any, context?: string): any {
+    Logger.error(message, context);
   }
   debug(message: any, context?: string): any {
     if (!this.logMessages) {

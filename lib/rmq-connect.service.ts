@@ -13,8 +13,10 @@ import {
   CONNECT_ERROR,
   CONNECT_FAILED_MESSAGE,
   INITIALIZATION_STEP_DELAY,
+  RECONNECTION_INTERVAL,
   RMQ_APP_OPTIONS,
   RMQ_CONNECT_OPTIONS,
+  SUCCESSFULL_CONNECT,
 } from './constants';
 import {
   IRabbitMQConfig,
@@ -193,25 +195,47 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async setUpConnect(options: IRabbitMQConfig) {
-    this.connection = await connect(options, this.globalOptions.socketOptions);
-    this.isConnected = true;
-    this.connection.on(CLOSE_EVENT, (err) => {
-      this.isConnected = false;
-      this.logger.error(CLOSE_MESSAGE);
-    });
-    this.connection.on(CONNECT_ERROR, (err) => {
-      this.logger.error(CONNECT_FAILED_MESSAGE);
-    });
-    this.connection.on(CONNECT_BLOCKED, (err) => {
-      this.logger.error(CONNECT_BLOCKED_MESSAGE);
-    });
+  private async setUpConnect(options: IRabbitMQConfig): Promise<void> {
+    try {
+      this.connection = await connect(
+        options,
+        this.globalOptions.socketOptions,
+      );
+      this.isConnected = true;
+      this.logger.log(SUCCESSFULL_CONNECT);
+
+      this.connection.on(CLOSE_EVENT, (err) => {
+        this.isConnected = false;
+        this.logger.error(`${CLOSE_MESSAGE}: ${err.message}`);
+        this.reconnect(options);
+      });
+
+      this.connection.on(CONNECT_ERROR, (err) => {
+        this.logger.error(`${CONNECT_FAILED_MESSAGE}: ${err.message}`);
+      });
+      this.connection.on(CONNECT_BLOCKED, (err) => {
+        this.logger.error(`${CONNECT_BLOCKED_MESSAGE}: ${err.message}`);
+      });
+    } catch (err) {
+      this.logger.error(`Failed to connect: ${err.message}`);
+    }
   }
 
+  private async reconnect(options: IRabbitMQConfig): Promise<void> {
+    this.logger.log('Attempting to reconnect...');
+    setTimeout(async () => {
+      try {
+        await this.setUpConnect(options);
+      } catch (err) {
+        this.logger.error(`Reconnection failed: ${err.message}`);
+        this.reconnect(options);
+      }
+    }, RECONNECTION_INTERVAL);
+  }
   private async createChannels() {
     try {
       this.baseChannel =
-        this.globalOptions?.typeChanel == TypeChanel.CONFIR_CHANEL
+        this.globalOptions?.typeChanel == TypeChanel.CONFIRM_CHANEL
           ? await this.createConfirmChannel()
           : await this.createChannel();
 

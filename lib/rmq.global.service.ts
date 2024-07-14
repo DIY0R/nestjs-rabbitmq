@@ -122,7 +122,7 @@ export class RmqGlobalService implements OnModuleInit {
         },
         confirmationFunction,
       );
-      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIR_CHANEL)
+      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIRM_CHANEL)
         resolve({ status: 'ok' });
     });
   }

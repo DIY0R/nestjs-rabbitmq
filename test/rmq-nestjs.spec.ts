@@ -22,7 +22,7 @@ describe('RMQe2e', () => {
             protocol: 'amqp',
           },
           {
-            typeChanel: TypeChanel.CONFIR_CHANEL,
+            typeChanel: TypeChanel.CONFIRM_CHANEL,
             globalBroker: {
               replyTo: {
                 queue: '',
