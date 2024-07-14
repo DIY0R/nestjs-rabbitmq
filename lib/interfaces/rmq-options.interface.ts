@@ -15,7 +15,7 @@ export enum TypeQueue {
 }
 export enum TypeChanel {
   CHANEL,
-  CONFIR_CHANEL,
+  CONFIRM_CHANEL,
 }
 export interface IExchange {
   exchange: string;
