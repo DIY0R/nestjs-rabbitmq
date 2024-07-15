@@ -10,7 +10,9 @@ import {
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
+  IRmqInterceptor,
   ISerDes,
+  ReverseFunction,
   TypeChanel,
   TypeQueue,
   TypeRmqInterceptor,
@@ -215,11 +217,8 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           messageParse,
           message,
         );
-      await Promise.all(
-        interceptorsReversed
-          .reverse()
-          .map(async (revers) => await revers(result, message)),
-      );
+
+      await this.callReverseFunctions(interceptorsReversed, result, message);
       if (message.properties.replyTo)
         await this.sendReply(
           message.properties.replyTo,
@@ -229,12 +228,23 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         );
     } catch (error) {
       this.logger.error('Error processing message', { error, message });
-
       this.rmqNestjsConnectService.nack(message, false, false);
     }
   }
-  private async interceptorsReverse(interceptors, message, messageParse) {
-    const interceptorsReversed: any[] = [];
+  private async callReverseFunctions(
+    interceptorsReversed: ReverseFunction[],
+    result: any,
+    message: ConsumeMessage,
+  ) {
+    for (const revers of interceptorsReversed.reverse())
+      await revers(result, message);
+  }
+  private async interceptorsReverse(
+    interceptors: IRmqInterceptor[],
+    message: ConsumeMessage,
+    messageParse: any,
+  ): Promise<ReverseFunction[]> {
+    const interceptorsReversed: ReverseFunction[] = [];
     for (const interceptor of interceptors) {
       const fnReversed = await interceptor.intercept(message, messageParse);
       interceptorsReversed.push(fnReversed);
@@ -251,7 +261,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       ? consumer.serdes.deserialize(content)
       : this.serDes.deserialize(content);
   }
-  private getInterceptors(consumer: MetaTegEnpoint) {
+  private getInterceptors(consumer: MetaTegEnpoint): IRmqInterceptor[] {
     return this.interceptors
       .concat(consumer.interceptors)
       .map((interceptor: any) => new interceptor());
