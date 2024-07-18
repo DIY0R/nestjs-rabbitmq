@@ -9,9 +9,9 @@ export class EventInterceptorModule implements IRmqInterceptor {
     message: ConsumeMessage,
     content: any,
   ): Promise<ReverseFunction> {
-    if (content?.array) content.array.push(1);
+    if (content?.arrayInterceptor) content.arrayInterceptor.push(1);
     return async (content: any, message: ConsumeMessage) => {
-      if (content?.array) content.array.push(6);
+      if (content?.arrayInterceptor) content.arrayInterceptor.push(6);
     };
   }
 }
@@ -21,9 +21,9 @@ export class EventInterceptorClass implements IRmqInterceptor {
     message: ConsumeMessage,
     content: any,
   ): Promise<ReverseFunction> {
-    if (content?.array) content.array.push(2);
+    if (content?.arrayInterceptor) content.arrayInterceptor.push(2);
     return async (content: any, message: ConsumeMessage) => {
-      if (content?.array) content.array.push(5);
+      if (content?.arrayInterceptor) content.arrayInterceptor.push(5);
     };
   }
 }
@@ -33,9 +33,9 @@ export class EventInterceptorEndpoint implements IRmqInterceptor {
     message: ConsumeMessage,
     content: any,
   ): Promise<ReverseFunction> {
-    content.array.push(3);
+    content.arrayInterceptor.push(3);
     return async (content: any, message: ConsumeMessage) => {
-      content.array.push(4);
+      content.arrayInterceptor.push(4);
     };
   }
 }
