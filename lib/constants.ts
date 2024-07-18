@@ -18,22 +18,24 @@ export const INITIALIZATION_STEP_DELAY = 400;
 export const DEFAULT_TIMEOUT = 40000;
 export const RECONNECTION_INTERVAL = 5000;
 export const NON_ROUTE = 'non_route_one';
+
 export const INDICATE_REPLY_QUEUE = 'Please indicate `replyToQueue`';
 export const INDICATE_REPLY_QUEUE_GLOBAL =
   'Please indicate `replyToQueue` in globalBroker';
 export const TIMEOUT_ERROR = 'Response timeout error';
-export const RECIVED_MESSAGE_ERROR = 'Received a message but with an error';
-export const ERROR_RMQ_SERVICE = 'Rmq service error';
+export const RECEIVED_MESSAGE_ERROR = 'Received a message but with an error';
+export const ERROR_RMQ_SERVICE = 'RMQ service error';
 export const NACKED = 'Negative acknowledgment';
-export const RETURN_NOTHING = 'Route return noting';
-export const INOF_NOT_FULL_OPTIONS =
+export const RETURN_NOTHING = 'Route returned nothing';
+export const INFO_NOT_FULL_OPTIONS =
   'Queue will not be created if there is no bind';
 export const ERROR_NO_ROUTE =
-  "Requested service doesn't have MessageRoute with this path";
+  "Requested service doesn't have a MessageRoute with this path";
 export const EMPTY_MESSAGE = 'Received empty message content';
 export const MESSAGE_NON = 'Send an existing message';
 export const CLOSE_MESSAGE = 'Disconnected from RMQ. Trying to reconnect';
 export const CONNECT_FAILED_MESSAGE = 'Failed to connect to RMQ';
 export const WRONG_CREDENTIALS_MESSAGE = 'Wrong credentials for RMQ';
 export const CONNECT_BLOCKED_MESSAGE = 'Connection blocked';
-export const SUCCESSFULL_CONNECT = 'Successfully connected to RabbitMQ';
+export const SUCCESSFUL_CONNECT = 'Successfully connected to RabbitMQ';
+export const ROOT_MODULE_DECLARED = 'Root RmqNestjsModule already declared!';

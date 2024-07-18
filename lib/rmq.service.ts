@@ -28,12 +28,12 @@ import {
   ERROR_NO_ROUTE,
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
-  INOF_NOT_FULL_OPTIONS,
+  INFO_NOT_FULL_OPTIONS,
   INTERCEPTORS,
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
-  RECIVED_MESSAGE_ERROR,
+  RECEIVED_MESSAGE_ERROR,
   RETURN_NOTHING,
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
@@ -117,7 +117,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
             this.logger.error('Received message with error header', {
               correlationId,
             });
-            return reject(new Error(RECIVED_MESSAGE_ERROR));
+            return reject(new Error(RECEIVED_MESSAGE_ERROR));
           }
           const content = msg.content;
           if (content.toString()) {
@@ -301,7 +301,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     const { queue: queueName, consumOptions } = this.options.queue;
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
-        INOF_NOT_FULL_OPTIONS,
+        INFO_NOT_FULL_OPTIONS,
         this.options.exchange.exchange,
       );
     const queue = await this.rmqNestjsConnectService.assertQueue(
