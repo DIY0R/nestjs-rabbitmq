@@ -8,6 +8,7 @@ import {
 } from './interfaces';
 import {
   INTERCEPTORS,
+  MIDDLEWARES,
   MODULE_TOKEN,
   RMQ_BROKER_OPTIONS,
   SERDES,
@@ -48,6 +49,7 @@ export class RmqModule {
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
         { provide: SERDES, useValue: options.serDes ?? serDes },
         { provide: INTERCEPTORS, useValue: options.interceptor ?? [] },
+        { provide: MIDDLEWARES, useValue: options.middlewares ?? [] },
         RmqService,
         MetaTegsScannerService,
       ],

@@ -16,7 +16,8 @@ import {
   RECONNECTION_INTERVAL,
   RMQ_APP_OPTIONS,
   RMQ_CONNECT_OPTIONS,
-  SUCCESSFULL_CONNECT,
+  ROOT_MODULE_DECLARED,
+  SUCCESSFUL_CONNECT,
 } from './constants';
 import {
   IRabbitMQConfig,
@@ -57,8 +58,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
   }
   async onModuleInit(): Promise<void> {
-    if (this.isInitialized)
-      throw Error('Root RmqNestjsModule root already declared!');
+    if (this.isInitialized) throw Error(ROOT_MODULE_DECLARED);
     await this.setUpConnect(this.options);
     await this.createChannels();
 
@@ -202,7 +202,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         this.globalOptions.socketOptions,
       );
       this.isConnected = true;
-      this.logger.log(SUCCESSFULL_CONNECT);
+      this.logger.log(SUCCESSFUL_CONNECT);
 
       this.connection.on(CLOSE_EVENT, (err) => {
         this.isConnected = false;

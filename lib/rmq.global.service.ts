@@ -35,7 +35,6 @@ export class RmqGlobalService implements OnModuleInit {
   private sendResponseEmitter: EventEmitter = new EventEmitter();
   private logger: LoggerService;
   private isInitialized = false;
-  public channel: Channel | ConfirmChannel = null;
 
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
@@ -48,9 +47,12 @@ export class RmqGlobalService implements OnModuleInit {
   }
   async onModuleInit() {
     if (this.globalOptions?.globalBroker?.replyTo) await this.replyQueue();
-    this.channel = await this.rmqNestjsConnectService.getBaseChanel();
     this.isInitialized = true;
   }
+  get channel(): Promise<Channel | ConfirmChannel> {
+    return this.rmqNestjsConnectService.getBaseChanel();
+  }
+  async chanel() {}
   public async send<IMessage, IReply>(
     exchange: string,
     topic: string,

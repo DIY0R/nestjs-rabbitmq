@@ -11,11 +11,13 @@ import {
   INotifyReply,
   IPublishOptions,
   IRmqInterceptor,
+  IRmqMiddleware,
   ISerDes,
   ReverseFunction,
   TypeChanel,
   TypeQueue,
   TypeRmqInterceptor,
+  TypeRmqMiddleware,
 } from './interfaces';
 import {
   IConsumFunction,
@@ -28,12 +30,13 @@ import {
   ERROR_NO_ROUTE,
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
-  INOF_NOT_FULL_OPTIONS,
+  INFO_NOT_FULL_OPTIONS,
   INTERCEPTORS,
+  MIDDLEWARES,
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
-  RECIVED_MESSAGE_ERROR,
+  RECEIVED_MESSAGE_ERROR,
   RETURN_NOTHING,
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
@@ -66,6 +69,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
     @Inject(SERDES) private readonly serDes: ISerDes,
     @Inject(INTERCEPTORS) private readonly interceptors: TypeRmqInterceptor[],
+    @Inject(MIDDLEWARES) private readonly middlewares: TypeRmqMiddleware[],
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
     this.logger = globalOptions.appOptions?.logger
@@ -117,7 +121,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
             this.logger.error('Received message with error header', {
               correlationId,
             });
-            return reject(new Error(RECIVED_MESSAGE_ERROR));
+            return reject(new Error(RECEIVED_MESSAGE_ERROR));
           }
           const content = msg.content;
           if (content.toString()) {
@@ -203,27 +207,32 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       const route = this.getRouteByTopic(message.fields.routingKey);
       const consumer = this.getConsumer(route);
       const messageParse = this.deserializeMessage(consumer, message.content);
-      const interceptors = this.getInterceptors(consumer);
-      const interceptorsReversed = await this.interceptorsReverse(
-        interceptors,
+      const middlewareResut = await this.executeMiddlewares(
+        consumer,
         message,
         messageParse,
       );
 
       let result = { error: ERROR_NO_ROUTE };
-      if (consumer.handler)
+      if (consumer.handler) {
+        const interceptorsReversed = await this.interceptorsReverse(
+          consumer,
+          message,
+          messageParse,
+        );
         result = await this.handleMessage(
           consumer.handler,
           messageParse,
           message,
         );
+        await this.callReverseFunctions(interceptorsReversed, result, message);
+      }
 
-      await this.callReverseFunctions(interceptorsReversed, result, message);
       if (message.properties.replyTo)
         await this.sendReply(
           message.properties.replyTo,
           consumer,
-          result,
+          middlewareResut ?? result,
           message.properties.correlationId,
         );
     } catch (error) {
@@ -239,11 +248,26 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     for (const revers of interceptorsReversed.reverse())
       await revers(result, message);
   }
+  private async executeMiddlewares(
+    consumer: MetaTegEnpoint,
+    message: ConsumeMessage,
+    messageParse: any,
+  ): Promise<any> {
+    const middlewares = this.getMiddlewares(consumer);
+    for (const middleware of middlewares) {
+      const middlewareResut = await middleware.use(message, messageParse);
+      if (middlewareResut != undefined) {
+        consumer.handler = null;
+        return middlewareResut;
+      }
+    }
+  }
   private async interceptorsReverse(
-    interceptors: IRmqInterceptor[],
+    consumer: MetaTegEnpoint,
     message: ConsumeMessage,
     messageParse: any,
   ): Promise<ReverseFunction[]> {
+    const interceptors = this.getInterceptors(consumer);
     const interceptorsReversed: ReverseFunction[] = [];
     for (const interceptor of interceptors) {
       const fnReversed = await interceptor.intercept(message, messageParse);
@@ -261,10 +285,16 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       ? consumer.serdes.deserialize(content)
       : this.serDes.deserialize(content);
   }
+
   private getInterceptors(consumer: MetaTegEnpoint): IRmqInterceptor[] {
     return this.interceptors
       .concat(consumer.interceptors)
       .map((interceptor: any) => new interceptor());
+  }
+  private getMiddlewares(consumer: MetaTegEnpoint): IRmqMiddleware[] {
+    return this.middlewares
+      .concat(consumer.middlewares)
+      .map((middleware: any) => new middleware());
   }
   private async handleMessage(
     handler: IConsumFunction,
@@ -301,7 +331,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     const { queue: queueName, consumOptions } = this.options.queue;
     if (!this.options.queue || !this.rmqMessageTegs?.size)
       return this.logger.warn(
-        INOF_NOT_FULL_OPTIONS,
+        INFO_NOT_FULL_OPTIONS,
         this.options.exchange.exchange,
       );
     const queue = await this.rmqNestjsConnectService.assertQueue(
