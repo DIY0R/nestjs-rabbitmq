@@ -15,7 +15,7 @@
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"lib/**/*.ts\"",
     "lint": "eslint \"{lib,test}/**/*.ts\" --fix",
-    "prepare": "husky install",
+    "prepare": "husky",
     "release": "release-it",
     "test": "jest"
   },
