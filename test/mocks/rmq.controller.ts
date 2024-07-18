@@ -15,14 +15,11 @@ export class RmqServieController {
     );
     return sendhi;
   }
-  async sendMessageWithInterceptor(
+  async sendMessageWithProvider<T>(
     obj: Record<string, any>,
     topic: string = 'text.interceptor',
   ) {
-    const sendhi = await this.rmqServie.send<object, { array: number[] }>(
-      topic,
-      obj,
-    );
+    const sendhi = await this.rmqServie.send<object, T>(topic, obj);
     return sendhi;
   }
 

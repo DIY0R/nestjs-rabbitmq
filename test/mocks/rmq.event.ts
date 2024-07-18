@@ -1,22 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConsumeMessage } from 'amqplib';
 import {
+  RmqService,
+  RmqMiddleware,
   MessageNonRoute,
   MessageRoute,
   RmqInterceptor,
   SerDes,
-} from '../../lib/decorators/';
-import { RmqService } from '../../lib';
-import { ConsumeMessage } from 'amqplib';
+} from '../../lib';
 import {
   EventInterceptorClass,
   EventInterceptorEndpoint,
 } from './event.interceptor';
-
+import {
+  EventMiddlewareClass,
+  EventMiddlewareEndpoint,
+  EventMiddlewareEndpointReturn,
+  EventMiddlewareModule,
+} from './event.middleware';
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => JSON.parse(message.toString()),
   serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
 })
+@RmqMiddleware(EventMiddlewareClass)
 @RmqInterceptor(EventInterceptorClass)
 export class RmqEvents {
   constructor(private readonly rmqServie: RmqService) {}
@@ -67,6 +74,21 @@ export class RmqEvents {
     this.rmqServie.ack(consumeMessage);
     return obj;
   }
+
+  @RmqMiddleware(EventMiddlewareEndpoint)
+  @MessageRoute('text.middleware')
+  messageMiddleware(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    return obj;
+  }
+
+  @RmqMiddleware(EventMiddlewareEndpointReturn)
+  @MessageRoute('text.middleware.return')
+  messageMiddlewareReturn(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    return obj;
+  }
+
   @MessageNonRoute()
   recivedNonRoute(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
