@@ -5,6 +5,7 @@ import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import {
   INTERCEPTOR_KEY,
   MESSAGE_ROUTER,
+  MIDDLEWARE_KEY,
   MODULE_TOKEN,
   SER_DAS_KEY,
 } from '../constants';
@@ -13,6 +14,7 @@ import {
   IMetaTegsMap,
   ISerDes,
   TypeRmqInterceptor,
+  TypeRmqMiddleware,
 } from '../interfaces';
 import { RQMColorLogger } from './logger';
 import { Module } from '@nestjs/core/injector/module';
@@ -67,14 +69,21 @@ export class MetaTegsScannerService {
     const boundHandler = instance[methodName].bind(instance);
     if (event) {
       const serdes = this.getSerDesMetaData(method, instance.constructor);
-      const interceptors = this.getInterceptorMetaData(
+      const middlewares = this.getLinesMetaDates<TypeRmqMiddleware>(
         method,
         instance.constructor,
+        MIDDLEWARE_KEY,
+      );
+      const interceptors = this.getLinesMetaDates<TypeRmqInterceptor>(
+        method,
+        instance.constructor,
+        INTERCEPTOR_KEY,
       );
       rmqMessagesMap.set(event, {
         handler: boundHandler,
         serdes,
         interceptors,
+        middlewares,
       });
       this.logger.log('Mapped ' + event, MESSAGE_ROUTER);
     }
@@ -97,6 +106,15 @@ export class MetaTegsScannerService {
       INTERCEPTOR_KEY,
       target,
     );
+    return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
+  }
+  private getLinesMetaDates<T>(
+    method: CallbackFunctionVariadic,
+    target: object,
+    key: string,
+  ): T[] {
+    const methodMeta = this.getMetaData<T>(key, method);
+    const targetMeta = this.getMetaData<T>(key, target);
     return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
   }
   private getMetaData<T>(key: string, target: any) {

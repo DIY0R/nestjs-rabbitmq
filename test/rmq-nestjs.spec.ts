@@ -118,15 +118,30 @@ describe('RMQe2e', () => {
     });
   });
 
-  describe('send message with interceptors', () => {
+  describe('send message with Providers', () => {
     it('send with interceptors', async () => {
-      const obj = { array: [0] };
+      const obj = { arrayInterceptor: [0] };
       const topic = 'text.interceptor';
-      const message = await rmqServieController.sendMessageWithInterceptor(
-        obj,
-        topic,
-      );
-      expect(message.array).toEqual([0, 1, 2, 3, 4, 5, 6]);
+      const message = await rmqServieController.sendMessageWithProvider<{
+        arrayInterceptor: number[];
+      }>(obj, topic);
+      expect(message.arrayInterceptor).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    });
+    it('send with middleware', async () => {
+      const obj = { arrayMiddleware: [0] };
+      const topic = 'text.middleware';
+      const message = await rmqServieController.sendMessageWithProvider<{
+        arrayMiddleware: number[];
+      }>(obj, topic);
+      expect(message.arrayMiddleware).toEqual([0, 1, 2, 3]);
+    });
+    it('send with middleware that returned ', async () => {
+      const obj = {};
+      const topic = 'text.middleware.return';
+      const message = await rmqServieController.sendMessageWithProvider<{
+        return: boolean;
+      }>(obj, topic);
+      expect(message).toEqual({ return: true });
     });
   });
   afterAll(async () => {

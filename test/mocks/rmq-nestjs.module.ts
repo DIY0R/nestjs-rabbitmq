@@ -3,6 +3,7 @@ import { RmqModule } from '../../lib';
 import { RmqEvents } from './rmq.event';
 import { RmqServieController } from './rmq.controller';
 import { EventInterceptorModule } from './event.interceptor';
+import { EventMiddlewareModule } from './event.middleware';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EventInterceptorModule } from './event.interceptor';
         consumOptions: { noAck: true },
       },
       interceptor: [EventInterceptorModule],
+      middlewares: [EventMiddlewareModule],
     }),
   ],
   providers: [RmqEvents, RmqServieController],

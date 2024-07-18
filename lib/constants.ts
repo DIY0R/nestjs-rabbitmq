@@ -5,9 +5,11 @@ export const RMQ_ROUTES_TRANSFORM = 'RMQ_ROUTES_TRANSFORM';
 export const RMQ_APP_OPTIONS = 'RMQ_APP_OPTIONS';
 export const TARGET_MODULE = 'TARGET_MODULE';
 export const SER_DAS_KEY = 'SER_DAS_KEY';
-export const INTERCEPTOR_KEY = 'INTERCEPTOR_KEY';
 export const SERDES = 'SERDES';
 export const INTERCEPTORS = 'INTERCEPTORS';
+export const MIDDLEWARES = 'MIDDLEWARES';
+export const INTERCEPTOR_KEY = 'INTERCEPTOR_KEY';
+export const MIDDLEWARE_KEY = 'MIDDLEWARE_KEY';
 export const MESSAGE_ROUTER = 'MessageRouterExplorer';
 export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 
