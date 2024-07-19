@@ -78,10 +78,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    this.rmqMessageTegs = this.metaTegsScannerService.scan(
-      RMQ_MESSAGE_META_TEG,
-      this.moduleToken,
-    );
     await this.init();
     this.isInitialized = true;
   }
@@ -94,7 +90,10 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       this.options.exchange,
     );
     if (this.options?.replyTo) await this.assertReplyQueue();
-    if (this.options?.queue) await this.bindQueueExchange();
+    if (this.options?.queue) {
+      this.scanMetaTegs();
+      await this.bindQueueExchange();
+    }
   }
   public async send<IMessage, IReply>(
     topic: string,
@@ -388,6 +387,12 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       if (isMatch) return route;
     }
     return '';
+  }
+  private scanMetaTegs() {
+    this.rmqMessageTegs = this.metaTegsScannerService.scan(
+      RMQ_MESSAGE_META_TEG,
+      this.moduleToken,
+    );
   }
 
   async onModuleDestroy() {
