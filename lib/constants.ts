@@ -31,6 +31,7 @@ export const NACKED = 'Negative acknowledgment';
 export const RETURN_NOTHING = 'Route returned nothing';
 export const INFO_NOT_FULL_OPTIONS =
   'Queue will not be created if there is no bind';
+  
 export const ERROR_NO_ROUTE =
   "Requested service doesn't have a MessageRoute with this path";
 export const EMPTY_MESSAGE = 'Received empty message content';

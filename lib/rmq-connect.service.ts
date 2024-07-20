@@ -28,7 +28,7 @@ import {
   ISendMessage,
   ISendToReplyQueueOptions,
   IGlobalOptions,
-  TypeChanel,
+  TypeChannel,
 } from './interfaces';
 import {
   Channel,
@@ -106,7 +106,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error}`);
     }
   }
-  async getBaseChanel() {
+  async getBaseChannel() {
     await this.initializationCheck();
     return this.baseChannel;
   }
@@ -235,7 +235,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private async createChannels() {
     try {
       this.baseChannel =
-        this.globalOptions?.typeChanel == TypeChanel.CONFIRM_CHANEL
+        this.globalOptions?.typeChannel == TypeChannel.CONFIRM_CHANNEL
           ? await this.createConfirmChannel()
           : await this.createChannel();
 

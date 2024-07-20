@@ -14,7 +14,7 @@ import {
   IRmqMiddleware,
   ISerDes,
   ReverseFunction,
-  TypeChanel,
+  TypeChannel,
   TypeQueue,
   TypeRmqInterceptor,
   TypeRmqMiddleware,
@@ -191,7 +191,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           confirmationFunction,
         );
 
-        if (this.globalOptions?.typeChanel !== TypeChanel.CONFIRM_CHANEL)
+        if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
           resolve({ status: 'ok' });
       } catch (err) {
         this.logger.error(`Notify error: ${err.message}`);
