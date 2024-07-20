@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { RmqServieController } from './mocks/rmq.controller';
-import { RmqModule, RmqService, TypeChanel } from '../lib';
+import { RmqModule, RmqService, TypeChannel } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 import { RETURN_NOTHING } from '../lib/constants';
 
@@ -22,7 +22,7 @@ describe('RMQe2e', () => {
             protocol: 'amqp',
           },
           {
-            typeChanel: TypeChanel.CONFIRM_CHANEL,
+            typeChannel: TypeChannel.CONFIRM_CHANNEL,
             globalBroker: {
               replyTo: {
                 queue: '',

@@ -6,18 +6,19 @@ import {
   Options,
   ConfirmChannel,
 } from 'amqplib';
+import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
+import { EventEmitter } from 'stream';
 import {
   IGlobalOptions,
   INotifyReply,
   IPublishOptions,
   ISerDes,
-  TypeChanel,
+  TypeChannel,
   TypeQueue,
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
   DEFAULT_TIMEOUT,
-  INDICATE_REPLY_QUEUE,
   INDICATE_REPLY_QUEUE_GLOBAL,
   INITIALIZATION_STEP_DELAY,
   NACKED,
@@ -25,10 +26,8 @@ import {
   SERDES,
   TIMEOUT_ERROR,
 } from './constants';
-import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
-import { getUniqId } from './common';
-import { EventEmitter } from 'stream';
-import { RQMColorLogger } from './common/logger';
+
+import { getUniqId, RQMColorLogger } from './common';
 
 export class RmqGlobalService implements OnModuleInit {
   private replyToQueue: Replies.AssertQueue = null;
@@ -50,9 +49,8 @@ export class RmqGlobalService implements OnModuleInit {
     this.isInitialized = true;
   }
   get channel(): Promise<Channel | ConfirmChannel> {
-    return this.rmqNestjsConnectService.getBaseChanel();
+    return this.rmqNestjsConnectService.getBaseChannel();
   }
-  async chanel() {}
   public async send<IMessage, IReply>(
     exchange: string,
     topic: string,
@@ -124,7 +122,7 @@ export class RmqGlobalService implements OnModuleInit {
         },
         confirmationFunction,
       );
-      if (this.globalOptions?.typeChanel !== TypeChanel.CONFIRM_CHANEL)
+      if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
         resolve({ status: 'ok' });
     });
   }

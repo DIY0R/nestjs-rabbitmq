@@ -13,9 +13,9 @@ export enum TypeQueue {
   QUEUE,
   REPLY_QUEUE,
 }
-export enum TypeChanel {
-  CHANEL,
-  CONFIRM_CHANEL,
+export enum TypeChannel {
+  CHANNEL,
+  CONFIRM_CHANNEL,
 }
 export interface IExchange {
   exchange: string;
@@ -94,7 +94,7 @@ export interface IGlobalOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
   socketOptions?: ISocketOptionsSSLPFX | ISocketOptionsSSLKEY;
-  typeChanel?: TypeChanel;
+  typeChannel?: TypeChannel;
 }
 export interface INotifyReply {
   status: string;
