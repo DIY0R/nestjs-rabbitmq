@@ -6,7 +6,18 @@
 
 ---
 
-## Documentation
+# Contents
+
+- [Installation](#installation)
+- [Module Initialization](#module-initialization)
+  - [ForRoot](#forroot)
+  - [ForRootAsync - Async initialization](#forrootasync-async-initialization)
+  - [Connect via URL](#connect-via-url)
+- [RmqGlobalService](#rmqglobalservice)
+  - [notify](#method-notify-if-you-want-to-just-notify-services)
+  - [send (RPC)](#method-send)
+  - [Send to Queue](#method-sendtoqueue)
+  - [Access to the channel](#channel)
 
 ### Installation
 
@@ -16,34 +27,17 @@ Start by installing the `@diy0r/nestjs-rabbitmq` package:
 npm i @diy0r/nestjs-rabbitmq
 ```
 
-### Importing the Module
+### Module Initialization
 
 In your root module, import `RmqNestjsModule`:
 
+#### ForRoot
+
 ```typescript
-import {
-  RmqNestjsModule,
-  IRabbitMQConfig,
-  IRabbitMQConfigAsync,
-} from '@diy0r/nestjs-rabbitmq';
-
-const syncOptions: IRabbitMQConfig =
-  {
-    username: 'for-test',
-    password: 'for-test',
-    hostname: 'localhost',
-    port: 5672,
-    vhost: 'local',
-    protocol: 'amqp',
-  } || 'amqp://for-test:for-test@localhost:5672/local';
-
-const asyncOptions: IRabbitMQConfigAsync = {
-  useFactory: (...args: any[]) => syncOptions,
-  inject: [],
-};
+import { RmqNestjsModule, IRabbitMQConfig } from '@diy0r/nestjs-rabbitmq';
 
 const appOptions: IGlobalOptions = {
-  typeChanel: TypeChanel.CONFIR_CHANEL,
+  typeChannel: TypeChannel.CONFIR_CHANNEL,
   globalBroker: {
     replyTo: {
       queue: '',
@@ -59,10 +53,39 @@ const appOptions: IGlobalOptions = {
 };
 
 @Module({
-  imports: [RmqNestjsModule.forRoot(syncOptions, appOptions)],
+  imports: [
+    RmqNestjsModule.forRoot(
+      {
+        username: 'for-test',
+        password: 'for-test',
+        hostname: 'localhost',
+        port: 5672,
+        vhost: 'local',
+        protocol: 'amqp',
+      },
+      appOptions,
+    ),
+  ],
   providers: [RmqSenderGlobalService],
 })
-// or asynchronously
+export class AppModule {}
+```
+
+#### ForRootAsync (Async initialization)
+
+```typescript
+import { RmqNestjsModule, IRabbitMQConfigAsync } from '@diy0r/nestjs-rabbitmq';
+const asyncOptions: IRabbitMQConfigAsync = {
+  useFactory: (...args: any[]) => ({
+    username: 'for-test',
+    password: 'for-test',
+    hostname: 'localhost',
+    port: 5672,
+    vhost: 'local',
+    protocol: 'amqp',
+  }),
+  inject: [],
+};
 @Module({
   imports: [RmqNestjsModule.forRootAsync(asyncOptions, appOptions)],
   providers: [RmqSenderGlobalService],
@@ -70,12 +93,24 @@ const appOptions: IGlobalOptions = {
 export class AppModule {}
 ```
 
+#### Connect via URL
+
+You can also connect using the standard URL. For more information, see the [RabbitMQ URI Specification](https://www.rabbitmq.com/docs/uri-spec).
+
+```typescript
+RmqNestjsModule.forRoot(
+  'amqp://for-test:for-test@localhost:5672/local',
+  appOptions,
+);
+```
+
+<br/>
 In `forRoot(syncOptions, appOptions)`, we pass two arguments for the connection and an optional argument for environment settings:
 
 - **syncOptions** - standard parameters [amqlib.connect](https://amqp-node.github.io/amqplib/channel_api.html#connect) for connection. Parameters can be an object or a URL.
 - **appOptions** - environment settings (optional)
 
-  - **typeChanel** - [channel type](https://amqp-node.github.io/amqplib/channel_api.html#channels), default is `TypeChanel.CHANEL`
+  - **typeChannel** - [channel type](https://amqp-node.github.io/amqplib/channel_api.html#channels), default is `TypeChannel.CHANNEL`
   - **globalBroker** - specify if you want to use RPC from `RmqGlobalService`
     - **replyTo** - needed for setting up the `replyTo` queue
       - **queue** - queue name. It's recommended to leave it as an empty string so RabbitMQ will automatically generate a unique name.
@@ -85,13 +120,24 @@ In `forRoot(syncOptions, appOptions)`, we pass two arguments for the connection 
     - **serviceName** - an arbitrary identifier for the originating application
     - **socketOptions** - here you can configure SSL/TLS [see](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
 
-We recommend specifying the `TypeChanel.CONFIR_CHANEL` channel type to get more accurate statuses for your requests.
-
-Once you have successfully connected, `RmqGlobalService` will be available globally, and you can import your module from any part of your application.
+We recommend specifying the `TypeChannel.CONFIR_CHANNEL` channel type to get more accurate statuses for your requests.
 
 ## RmqGlobalService
 
+After successful connection, `RmqGlobalService` will be available globally and you will be able to import your module from any part of your application and send messages.
+
 ```typescript
+@Injectable()
+export class SomeService {
+  constructor(private readonly rmqGlobalService: RmqGlobalService) {}
+
+  //...
+}
+```
+
+We recommend specifying interfaces for the objects you send and receive.
+
+```ts
 interface IReply {
   message: object;
 }
@@ -100,54 +146,75 @@ interface ISend {
   age: number;
   name: string;
 }
+```
 
-@Injectable()
-export class RmqSenderGlobalService {
-  private channel;
-  constructor(private readonly rmqGlobalService: RmqGlobalService) {
-    this.channel = rmqGlobalService.channel;
+#### Method `notify` If you want to just notify services
+
+```ts
+async sendNotify(obj: ISend) {
+    const { status } = await this.rmqGlobalService.notify<ISend>(
+      'exchange',
+      'user.login',
+      obj,
+    );
+    return status;
   }
+```
 
+- **'this.rmqGlobalService.notify<ISend>(exchange, routingKey, options)'** - asynchronous request that returns the message status
+  - **exchange** - exchange name
+  - **routingKey** - routing key
+  - **options** - standard [publish options](https://amqp-node.github.io/amqplib/channel_api.html#channelpublish) (optional)
+
+#### Method `send`
+
+If you have defined `globalBroker` in `forRoot`, you will have access to the RPC method `send`,otherwise, you will catch an error when calling it.
+
+```ts
   async sendMessage(obj: ISend) {
     const message = await this.rmqGlobalService.send<ISend, IReply>(
-      'exchange',
-      'topic',
+      'exchange name',
+      'user.rpc',
       obj,
     );
     return message;
   }
-
-  async sendNotify(obj: ISend) {
-    const { status } = await this.rmqGlobalService.notify<ISend>(
-      'exchange',
-      'topic',
-      obj,
-    );
-    return status;
-  }
-
-  sendToQueue(queue: string, message: Record<string, any>) {
-    const status = this.rmqGlobalService.sendToQueue<object>(queue, message);
-    return status;
-  }
-}
 ```
 
-If you have defined `globalBroker` in `forRoot`, you will have access to the RPC method `send`, otherwise, you will catch an error when calling it.
-
-- **'this.rmqGlobalService.send<ISend, IReply>(exchange, topic, options)'** - asynchronous request
+- **'this.rmqGlobalService.send<ISend, IReply>(exchange, routingKey, options)'** - asynchronous request.
 
   - **exchange** - exchange name
-  - **topic** - topic name
-  - **options** - standard [publish options](https://amqp-node.github.io/amqplib/channel_api.html#channelpublish)
-    - **timeout** - if supplied, the message will have its own timeout.
+  - **routingKey** - routing key
+  - **options** - standard [publish options](https://amqp-node.github.io/amqplib/channel_api.html#channelpublish) (optional)
+    - **timeout** - if supplied, the message will have its own timeout.(custom parameter)
 
-- **'this.rmqGlobalService.notify<ISend>(exchange, topic, options)'** - asynchronous request that returns the message status
-- **'this.rmqGlobalService.sendToQueue()'** - standard method [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue)
+#### Method `sendToQueue`
 
-We recommend specifying interfaces for the objects you send and receive.
+Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue) method from amqlib, this method differs in that messages go through [Serialization]($SerDes) before being sent.
 
-If you want access to the standard RabbitMQ channel, you always have access to `this.rmqGlobalService.channel` and all its methods [See](https://amqp-node.github.io/amqplib/channel_api.html#channel).
+```ts
+ sendToQueue(queue: string, obj:ISend) {
+    const status = this.rmqGlobalService.sendToQueue<ISend>(queue, obj);
+    return status;
+  }
+```
+
+Return either true, meaning “keep sending”, or false, meaning “please wait for a ‘drain’ event”.[See Flow control
+](https://amqp-node.github.io/amqplib/channel_api.html#flowcontrol)
+
+- **'this.rmqGlobalService.sendToQueue()'** - synchronous function
+  - queue - queue name
+
+#### Channel
+
+If you want access to the standard RabbitMQ channel, you always have access to async getter `this.rmqGlobalService.channel` and all its methods [See](https://amqp-node.github.io/amqplib/channel_api.html#channel).
+
+```ts
+ async getChannel() {
+    const channel: Channel | ConfirmChannel = await this.rmqGlobalService.channel;
+    return channel;
+  }
+```
 
 # Creating Exchange, Queue, and Listening
 
