@@ -27,6 +27,7 @@
   - [RmqService](#rmqservice)
     - [send(RPC) and notify - methods](#send-and-notify---methods)
     - [healthCheck, ack and nack - methods](#healthcheckack-and-nack---methods)
+  - [Serialization/Deserialization in specific module](#serializationdeserialization-in-specific-module)
 
 ## Installation
 
