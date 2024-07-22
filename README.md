@@ -240,9 +240,9 @@ const appOptions: IGlobalOptions = {
 
 The `deserialize` method is responsible for converting a message from its raw format (typically a Buffer in Node.js) into a JavaScript object or another suitable format for processing.
 
-#### Method `serializer`
+#### Method `serialize`
 
-The `serializer` method is responsible for converting a JavaScript object or any other data format into a raw format (typically a Buffer) suitable for transmission over RabbitMQ.
+The `serialize` method is responsible for converting a JavaScript object or any other data format into a raw format (typically a Buffer) suitable for transmission over RabbitMQ.
 
 In this case, it will be applied to all methods of [`RmqGlobalService`](#RmqGlobalService).
 
@@ -604,7 +604,7 @@ At the module level, the SerDes configuration applies to all message handlers wi
       },
       serDes: {
         deserialize: (message: Buffer): any => OtherDeserializer(message),
-        serializer: (message: any): Buffer => OtherSerializer(message),
+        serialize: (message: any): Buffer => OtherSerializer(message),
       }, // serDes is applied to all handlers in the module!
     }),
   ],
@@ -620,7 +620,7 @@ You can also configure SerDes at the provider level, applying it to all message 
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => OtherDeserializer(message),
-  serializer: (message: any): Buffer => OtherSerializer(message),
+  serialize: (message: any): Buffer => OtherSerializer(message),
 }) // SerDes is applied to all methods in the MyRmqEvents
 export class MyRmqEvents {
   @MessageRoute('text.text')
@@ -642,7 +642,7 @@ export class MyRmqEvents {
   @MessageRoute('text.text')
   @SerDes({
     deserialize: (message: Buffer): any => OtherDeserializer(message),
-    serializer: (message: any): Buffer => OtherSerializer(message),
+    serialize: (message: any): Buffer => OtherSerializer(message),
   }) // SerDes is applied only to this method
   handleTextText(obj: any, consumeMessage: ConsumeMessage) {
     return { message: obj };
