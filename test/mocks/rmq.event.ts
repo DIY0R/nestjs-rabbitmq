@@ -16,12 +16,11 @@ import {
   EventMiddlewareClass,
   EventMiddlewareEndpoint,
   EventMiddlewareEndpointReturn,
-  EventMiddlewareModule,
 } from './event.middleware';
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => JSON.parse(message.toString()),
-  serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
+  serialize: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
 })
 @RmqMiddleware(EventMiddlewareClass)
 @RmqInterceptor(EventInterceptorClass)
@@ -40,7 +39,7 @@ export class RmqEvents {
   @MessageRoute('*.rpc.*')
   @SerDes({
     deserialize: (message: Buffer): any => JSON.parse(message.toString()),
-    serializer: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
+    serialize: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
   })
   recivedTopic(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);

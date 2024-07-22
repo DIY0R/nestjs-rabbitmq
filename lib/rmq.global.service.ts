@@ -81,7 +81,7 @@ export class RmqGlobalService implements OnModuleInit {
           {
             exchange: exchange,
             routingKey: topic,
-            content: this.serDes.serializer(message),
+            content: this.serDes.serialize(message),
             options: {
               replyTo: this.replyToQueue.queue,
               appId: serviceName,
@@ -113,7 +113,7 @@ export class RmqGlobalService implements OnModuleInit {
         {
           exchange,
           routingKey: topic,
-          content: this.serDes.serializer(message),
+          content: this.serDes.serialize(message),
           options: {
             appId: this.globalOptions?.globalBroker?.serviceName ?? '',
             timestamp: new Date().getTime(),
@@ -134,7 +134,7 @@ export class RmqGlobalService implements OnModuleInit {
   ): boolean {
     const status = this.rmqNestjsConnectService.sendToQueue(
       queue,
-      this.serDes.serializer(content),
+      this.serDes.serialize(content),
       options,
     );
     return status;

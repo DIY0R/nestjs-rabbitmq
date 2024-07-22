@@ -34,7 +34,7 @@ describe('RMQe2e', () => {
               serDes: {
                 deserialize: (message: Buffer): any =>
                   JSON.parse(message.toString()),
-                serializer: (message: any): Buffer =>
+                serialize: (message: any): Buffer =>
                   Buffer.from(JSON.stringify(message)),
               },
             },

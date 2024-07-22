@@ -142,7 +142,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           {
             exchange: this.options.exchange.exchange,
             routingKey: topic,
-            content: this.serDes.serializer(message),
+            content: this.serDes.serialize(message),
             options: {
               replyTo: this.replyToQueue.queue,
               appId: this.options.serviceName,
@@ -181,7 +181,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
           {
             exchange: this.options.exchange.exchange,
             routingKey: topic,
-            content: this.serDes.serializer(message),
+            content: this.serDes.serialize(message),
             options: {
               appId: this.options.serviceName,
               timestamp: new Date().getTime(),
@@ -311,7 +311,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     correlationId: string,
   ) {
     const serializedResult =
-      consumer.serdes?.serializer(result) || this.serDes.serializer(result);
+      consumer.serdes?.serialize(result) || this.serDes.serialize(result);
     await this.rmqNestjsConnectService.sendToReplyQueue({
       replyTo,
       content: serializedResult,
