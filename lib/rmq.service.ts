@@ -30,7 +30,6 @@ import {
   ERROR_NO_ROUTE,
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
-  INFO_NOT_FULL_OPTIONS,
   INTERCEPTORS,
   MIDDLEWARES,
   MODULE_TOKEN,
@@ -43,6 +42,7 @@ import {
   RMQ_MESSAGE_META_TEG,
   SERDES,
   TIMEOUT_ERROR,
+  NON_DECLARED_ROUTE,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
 import { MetaTegsScannerService, toRegex } from './common';
@@ -328,11 +328,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
 
   private async bindQueueExchange() {
     const { queue: queueName, consumOptions } = this.options.queue;
-    if (!this.options.queue || !this.rmqMessageTegs?.size)
-      return this.logger.warn(
-        INFO_NOT_FULL_OPTIONS,
-        this.options.exchange.exchange,
-      );
+    if (!this.rmqMessageTegs?.size) return this.logger.warn(NON_DECLARED_ROUTE);
     const queue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.QUEUE,
       this.options.queue,
