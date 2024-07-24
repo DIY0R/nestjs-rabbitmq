@@ -87,6 +87,11 @@ export class RmqEvents {
     this.rmqServie.ack(consumeMessage);
     return obj;
   }
+  @MessageRoute('text.number')
+  numberGet(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    return { number: obj.number };
+  }
 
   @MessageNonRoute()
   recivedNonRoute(obj: any, consumeMessage: ConsumeMessage) {

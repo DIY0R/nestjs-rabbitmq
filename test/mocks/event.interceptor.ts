@@ -1,9 +1,8 @@
 import { ConsumeMessage } from 'amqplib';
-import {
-  ReverseFunction,
-  IRmqInterceptor,
-} from '../../lib/interfaces/interceptor.interface';
+import { Injectable } from '@nestjs/common';
+import { RmqService, ReverseFunction, IRmqInterceptor } from '../../lib';
 
+@Injectable()
 export class EventInterceptorModule implements IRmqInterceptor {
   async intercept(
     message: ConsumeMessage,
@@ -15,7 +14,7 @@ export class EventInterceptorModule implements IRmqInterceptor {
     };
   }
 }
-
+@Injectable()
 export class EventInterceptorClass implements IRmqInterceptor {
   async intercept(
     message: ConsumeMessage,
@@ -27,15 +26,22 @@ export class EventInterceptorClass implements IRmqInterceptor {
     };
   }
 }
-
+@Injectable()
 export class EventInterceptorEndpoint implements IRmqInterceptor {
+  constructor(private readonly rmqSerivce: RmqService) {}
   async intercept(
     message: ConsumeMessage,
     content: any,
   ): Promise<ReverseFunction> {
     content.arrayInterceptor.push(3);
     return async (content: any, message: ConsumeMessage) => {
-      content.arrayInterceptor.push(4);
+      const { number } = await this.rmqSerivce.send<object, any>(
+        'text.number',
+        {
+          number: 4,
+        },
+      );
+      content.arrayInterceptor.push(number);
     };
   }
 }
