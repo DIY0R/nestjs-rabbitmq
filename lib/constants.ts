@@ -1,3 +1,5 @@
+import { INTERCEPTORS_METADATA } from '@nestjs/common/constants';
+
 export const RMQ_CONNECT_OPTIONS = 'RMQ_CONNECT_OPTIONS';
 export const RMQ_BROKER_OPTIONS = 'RMQ_BROKER_OPTIONS';
 export const RMQ_MESSAGE_META_TEG = 'RMQ_MESSAGE_META_TEG';
@@ -8,8 +10,8 @@ export const SER_DAS_KEY = 'SER_DAS_KEY';
 export const SERDES = 'SERDES';
 export const INTERCEPTORS = 'INTERCEPTORS';
 export const MIDDLEWARES = 'MIDDLEWARES';
-export const INTERCEPTOR_KEY = 'INTERCEPTOR_KEY';
-export const MIDDLEWARE_KEY = 'MIDDLEWARE_KEY';
+export const INTERCEPTOR_CUSTOM_METADATA = INTERCEPTORS_METADATA;
+export const MIDDLEWARES_METADATA = 'MIDDLEWARE_KEY';
 export const MESSAGE_ROUTER = 'MessageRouterExplorer';
 export const MODULE_TOKEN = 'MODULE_UNIQ_TOKEN';
 

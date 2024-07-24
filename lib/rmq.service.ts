@@ -10,7 +10,6 @@ import {
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
-  IRmqInterceptor,
   IRmqMiddleware,
   ISerDes,
   ReverseFunction,
@@ -20,6 +19,7 @@ import {
   TypeRmqMiddleware,
 } from './interfaces';
 import {
+  CallbackFunctionVariadic,
   IConsumFunction,
   IMetaTegsMap,
   MetaTegEnpoint,
@@ -50,6 +50,7 @@ import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
@@ -62,6 +63,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   private connected = false;
   private logger: LoggerService;
   constructor(
+    private readonly moduleRef: ModuleRef,
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
 
@@ -266,13 +268,20 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     message: ConsumeMessage,
     messageParse: any,
   ): Promise<ReverseFunction[]> {
-    const interceptors = this.getInterceptors(consumer);
+    const interceptors: any = this.getInterceptors(consumer.interceptors);
     const interceptorsReversed: ReverseFunction[] = [];
-    for (const interceptor of interceptors) {
-      const fnReversed = await interceptor.intercept(message, messageParse);
+    for (const intercept of interceptors) {
+      const fnReversed = await intercept(message, messageParse);
       interceptorsReversed.push(fnReversed);
     }
     return interceptorsReversed;
+  }
+  private getInterceptors(consumerInterceptors: CallbackFunctionVariadic[]) {
+    const moduleInterceptors = this.interceptors.map((token) => {
+      const instance = this.moduleRef.get(token);
+      return instance.intercept.bind(instance);
+    });
+    return moduleInterceptors.concat(consumerInterceptors);
   }
 
   private getConsumer(route: string): MetaTegEnpoint {
@@ -285,11 +294,6 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       : this.serDes.deserialize(content);
   }
 
-  private getInterceptors(consumer: MetaTegEnpoint): IRmqInterceptor[] {
-    return this.interceptors
-      .concat(consumer.interceptors)
-      .map((interceptor: any) => new interceptor());
-  }
   private getMiddlewares(consumer: MetaTegEnpoint): IRmqMiddleware[] {
     return this.middlewares
       .concat(consumer.middlewares)

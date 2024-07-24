@@ -1,6 +1,5 @@
-import { SetMetadata } from '@nestjs/common';
-import { INTERCEPTOR_KEY } from '../constants';
+import { UseInterceptors } from '@nestjs/common';
 import { TypeRmqInterceptor } from 'lib/interfaces';
 
-export const RmqInterceptor = (options: TypeRmqInterceptor) =>
-  SetMetadata(INTERCEPTOR_KEY, options);
+export const RmqInterceptor = (intercepters: TypeRmqInterceptor) =>
+  UseInterceptors(intercepters);

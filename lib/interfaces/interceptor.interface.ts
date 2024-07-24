@@ -5,6 +5,7 @@ export type ReverseFunction = (
   message: ConsumeMessage,
 ) => Promise<void>;
 export abstract class IRmqInterceptor {
+  constructor(...injects: any[]) {}
   abstract intercept(
     content: any,
     message: ConsumeMessage,

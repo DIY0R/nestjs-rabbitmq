@@ -1,6 +1,5 @@
 import { ConsumeMessage } from 'amqplib';
 import { ISerDes } from './serdes.interface';
-import { TypeRmqInterceptor } from './interceptor.interface';
 import { TypeRmqMiddleware } from './middleware.interface';
 
 export type IConsumFunction = (
@@ -10,7 +9,7 @@ export type IConsumFunction = (
 export interface MetaTegEnpoint {
   handler: IConsumFunction;
   serdes?: ISerDes | undefined;
-  interceptors: TypeRmqInterceptor[];
+  interceptors: CallbackFunctionVariadic[];
   middlewares: TypeRmqMiddleware[];
 }
 export type IMetaTegsMap = Map<string, MetaTegEnpoint>;

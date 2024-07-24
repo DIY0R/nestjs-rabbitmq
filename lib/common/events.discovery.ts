@@ -1,23 +1,24 @@
-import { Injectable } from '@nestjs/common';
-import { ModulesContainer, Reflector } from '@nestjs/core';
-import { MetadataScanner } from '@nestjs/core';
+import { Injectable, InjectionToken } from '@nestjs/common';
+import { ModulesContainer, Reflector, MetadataScanner } from '@nestjs/core';
+import { Module } from '@nestjs/core/injector/module';
+import { Injectable as InjectableInterface } from '@nestjs/common/interfaces';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import {
-  INTERCEPTOR_KEY,
+  INTERCEPTOR_CUSTOM_METADATA,
   MESSAGE_ROUTER,
-  MIDDLEWARE_KEY,
+  MIDDLEWARES_METADATA,
   MODULE_TOKEN,
   SER_DAS_KEY,
 } from '../constants';
 import {
   CallbackFunctionVariadic,
   IMetaTegsMap,
+  IRmqInterceptor,
   ISerDes,
   TypeRmqInterceptor,
   TypeRmqMiddleware,
 } from '../interfaces';
 import { RQMColorLogger } from './logger';
-import { Module } from '@nestjs/core/injector/module';
 
 @Injectable()
 export class MetaTegsScannerService {
@@ -47,8 +48,15 @@ export class MetaTegsScannerService {
       const { instance } = provider;
       if (instance instanceof Object) {
         const allMethodNames = this.metadataScanner.getAllMethodNames(instance);
+
         allMethodNames.forEach((name: string) =>
-          this.lookupMethods(metaTeg, rmqMessagesMap, instance, name),
+          this.lookupMethods(
+            metaTeg,
+            rmqMessagesMap,
+            instance,
+            name,
+            currentModule.injectables,
+          ),
         );
       }
     });
@@ -63,21 +71,22 @@ export class MetaTegsScannerService {
     rmqMessagesMap: IMetaTegsMap,
     instance: object,
     methodName: string,
+    injectables: Map<InjectionToken, InstanceWrapper<InjectableInterface>>,
   ) {
     const method = instance[methodName];
     const event = this.getMetaData<string>(metaTeg, method);
     const boundHandler = instance[methodName].bind(instance);
     if (event) {
       const serdes = this.getSerDesMetaData(method, instance.constructor);
-      const middlewares = this.getLinesMetaDates<TypeRmqMiddleware>(
+      const middlewares = this.getLinesMetaDate<TypeRmqMiddleware>(
         method,
         instance.constructor,
-        MIDDLEWARE_KEY,
+        MIDDLEWARES_METADATA,
       );
-      const interceptors = this.getLinesMetaDates<TypeRmqInterceptor>(
+      const interceptors = this.getInterceptors(
+        injectables,
         method,
         instance.constructor,
-        INTERCEPTOR_KEY,
       );
       rmqMessagesMap.set(event, {
         handler: boundHandler,
@@ -94,29 +103,33 @@ export class MetaTegsScannerService {
       this.getMetaData<ISerDes>(SER_DAS_KEY, target)
     );
   }
-  private getInterceptorMetaData(
+  private getLinesMetaDate<T>(
     method: CallbackFunctionVariadic,
-    target: object,
-  ): TypeRmqInterceptor[] {
-    const methodMeta = this.getMetaData<TypeRmqInterceptor>(
-      INTERCEPTOR_KEY,
-      method,
-    );
-    const targetMeta = this.getMetaData<TypeRmqInterceptor>(
-      INTERCEPTOR_KEY,
-      target,
-    );
-    return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
-  }
-  private getLinesMetaDates<T>(
-    method: CallbackFunctionVariadic,
-    target: object,
+    classProvider: Record<string, any>,
     key: string,
   ): T[] {
     const methodMeta = this.getMetaData<T>(key, method);
-    const targetMeta = this.getMetaData<T>(key, target);
+    const targetMeta = this.getMetaData<T>(key, classProvider);
     return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
   }
+  private getInterceptors(
+    injectables: Map<any, any>,
+    method: CallbackFunctionVariadic,
+    classProvider: Record<string, any>,
+  ) {
+    const interceptors = this.getLinesMetaDate<TypeRmqInterceptor[]>(
+      method,
+      classProvider,
+      INTERCEPTOR_CUSTOM_METADATA,
+    );
+    return interceptors.map((interceptor) => {
+      const instance: IRmqInterceptor = injectables.get(
+        interceptor[0],
+      ).instance;
+      return instance.intercept.bind(instance);
+    });
+  }
+
   private getMetaData<T>(key: string, target: any) {
     return this.reflector.get<T>(key, target);
   }
