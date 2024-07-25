@@ -197,7 +197,7 @@ If you have defined `globalBroker` in `forRoot`, you will have access to the RPC
 
 ### Method `sendToQueue`
 
-Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue) method from amqlib, this method differs in that messages go through [Serialization]($SerDes) before being sent.
+Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue) method from amqlib, this method differs in that messages go through [Serialization](#serializationdeserialization) before being sent.
 
 ```ts
  sendToQueue(queue: string, obj:ISend) {
@@ -380,7 +380,7 @@ export class EventMiddleware implements IRmqMiddleware {
 
 If nothing is returned, the execution of the middleware chain will continue.
 
-EventMiddleware implements the `use` method, which takes two parameters: `message`, which is the standard `ConsumeMessage` from amqplib, and `content`, which is your message that has passed through [deserialization](#).
+EventMiddleware implements the `use` method, which takes two parameters: `message`, which is the standard `ConsumeMessage` from amqplib, and `content`, which is your message that has passed through [deserialization](#serializationdeserialization-in-specific-module).
 
 #### Module Level
 
@@ -463,7 +463,7 @@ export class EventInterceptor implements IRmqInterceptor {
 }
 ```
 
-EventInterceptor implements the `intercept` method, which takes two parameters: `message`, which is the standard `ConsumeMessage` from amqplib, and `content`, which is your message that has passed through [deserialization](#). The `intercept` method returns an asynchronous function that will be invoked after processing.
+EventInterceptor implements the `intercept` method, which takes two parameters: `message`, which is the standard `ConsumeMessage` from amqplib, and `content`, which is your message that has passed through [deserialization](#serializationdeserialization-in-specific-module). The `intercept` method returns an asynchronous function that will be invoked after processing.
 
 #### Module Level
 
