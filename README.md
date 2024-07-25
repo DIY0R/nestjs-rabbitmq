@@ -442,13 +442,15 @@ export class MyRmqEvents {
 
 ### Interceptor
 
-Interceptors allow you to intercept and modify message handling both before and after it is processed by the handler. You can declare interceptors at various levels, including the module level, provider level, and specific endpoint level.
-It is important to note that interceptors are executed after the middlewares!
+Interceptors allow you to intercept and modify the processing of a message both before and after it is processed by a handler, just like [Interceptors from Nest.js](#https://docs.nestjs.com/interceptors). You can declare interceptors at various levels, including the module level, the provider level, and the specific endpoint level.
+It's important to note that interceptors are executed after the middleware!
 
-To declare an interceptor, implement the `IRmqInterceptor` abstract class.
+To declare an interceptor, implement the abstract class `IRmqInterceptor` with a decorator `@Injectable`.
 
 ```ts
+@Injectable()
 export class EventInterceptor implements IRmqInterceptor {
+  constructor(private readonly rmqSerivce: RmqService) {}
   async intercept(
     message: ConsumeMessage,
     content: any,
@@ -519,9 +521,7 @@ export class MyRmqEvents {
 }
 ```
 
-<br/>
-
-    Initially, interceptors at the module level will be invoked, then at the class level, followed by the endpoint level, and then in reverse order.
+**Initially, interceptors at the module level will be invoked, then at the class level, followed by the endpoint level, and then in reverse order.**
 
 ### RmqService
 
