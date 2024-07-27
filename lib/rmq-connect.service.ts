@@ -133,6 +133,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         sendToQueueOptions.content,
         {
           correlationId: sendToQueueOptions.correlationId,
+          headers: sendToQueueOptions.headers,
         },
       );
     } catch (error) {

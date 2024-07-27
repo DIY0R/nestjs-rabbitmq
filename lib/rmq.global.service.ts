@@ -27,7 +27,7 @@ import {
   TIMEOUT_ERROR,
 } from './constants';
 
-import { getUniqId, RQMColorLogger } from './common';
+import { getUniqId, RMQError, RmqErrorService, RQMColorLogger } from './common';
 
 export class RmqGlobalService implements OnModuleInit {
   private replyToQueue: Replies.AssertQueue = null;
@@ -37,6 +37,8 @@ export class RmqGlobalService implements OnModuleInit {
 
   constructor(
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
+    private readonly rmqErrorService: RmqErrorService,
+
     @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
     @Inject(SERDES) private readonly serDes: ISerDes,
   ) {
@@ -67,13 +69,16 @@ export class RmqGlobalService implements OnModuleInit {
         const timerId = setTimeout(() => reject(TIMEOUT_ERROR), timeout);
         this.sendResponseEmitter.once(correlationId, (msg: Message) => {
           clearTimeout(timerId);
-          const { content } = msg;
+          if (msg.properties?.headers?.['-x-error'])
+            return reject(this.rmqErrorService.errorHandler(msg));
+
+          const content = msg.content;
           if (content.toString()) resolve(this.serDes.deserialize(content));
         });
         const confirmationFunction = (err: any, ok: Replies.Empty) => {
           if (err) {
             clearTimeout(timerId);
-            reject(NACKED);
+            reject(new RMQError(NACKED));
           }
         };
 

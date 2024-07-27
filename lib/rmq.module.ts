@@ -3,6 +3,7 @@ import { RmqService } from './rmq.service';
 import { DiscoveryModule } from '@nestjs/core';
 import {
   MetaTegsScannerService,
+  RmqErrorService,
   getUniqId,
   providersInjectionArr,
 } from './common';
@@ -22,7 +23,10 @@ import {
 } from './constants';
 
 @Module({
-  providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
+  providers: [
+    { provide: MODULE_TOKEN, useFactory: getUniqId },
+    RmqErrorService,
+  ],
 })
 export class RmqModule {
   static forRoot(
