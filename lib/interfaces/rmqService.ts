@@ -1,5 +1,4 @@
-import { ConsumeMessage } from 'amqplib';
-
-export interface ImqService {
-  readonly listenQueue: (msg: ConsumeMessage | null) => void;
+export interface IResult {
+  content: any;
+  headers: Record<string, any>;
 }

@@ -8,7 +8,7 @@ export class RmqServieController {
     private readonly rmqGlobalService: RmqGlobalService,
   ) {}
 
-  async sendMessage(obj: Record<string, any>, topic: string = 'text.text') {
+  async sendMessage(obj: Record<string, any>, topic: string) {
     const sendhi = await this.rmqServie.send<object, { message: object }>(
       topic,
       obj,
@@ -23,11 +23,11 @@ export class RmqServieController {
     return sendhi;
   }
 
-  async sendGlobalRoute(obj: Record<string, any>) {
+  async sendGlobal(obj: Record<string, any>, topic: string) {
     const message = await this.rmqGlobalService.send<
       object,
       { message: object }
-    >('for-test', 'global.rpc', obj);
+    >('for-test', topic, obj);
 
     return message;
   }

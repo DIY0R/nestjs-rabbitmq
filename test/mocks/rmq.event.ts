@@ -17,6 +17,7 @@ import {
   EventMiddlewareEndpoint,
   EventMiddlewareEndpointReturn,
 } from './event.middleware';
+import { RMQError } from '../../lib/common';
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => JSON.parse(message.toString()),
@@ -61,6 +62,16 @@ export class RmqEvents {
   recivedTopicPattern(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
     return { message: obj };
+  }
+  @MessageRoute('error.error')
+  recivedTopicError(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    throw new Error('error');
+  }
+  @MessageRoute('error.error.rmq')
+  recivedTopicErrorRmq(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    throw new RMQError('error', 'myService', 302);
   }
   @MessageRoute('notify.global')
   recivedTopicNotify(obj: any, consumeMessage: ConsumeMessage) {

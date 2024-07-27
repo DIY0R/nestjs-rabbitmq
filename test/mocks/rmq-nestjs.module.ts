@@ -29,6 +29,7 @@ import { EventMiddlewareModule } from './event.middleware';
       },
       interceptor: [EventInterceptorModule],
       middlewares: [EventMiddlewareModule],
+      serviceName: 'Connection-Service-Spec',
     }),
   ],
   providers: [RmqEvents, RmqServieController],

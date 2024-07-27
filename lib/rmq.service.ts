@@ -10,6 +10,7 @@ import {
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
+  IResult,
   IRmqMiddleware,
   ISerDes,
   ReverseFunction,
@@ -26,8 +27,7 @@ import {
 } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
-  EMPTY_MESSAGE,
-  ERROR_NO_ROUTE,
+  EMPTY_OBJECT_MESSAGE,
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
   INTERCEPTORS,
@@ -35,8 +35,6 @@ import {
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
-  RECEIVED_MESSAGE_ERROR,
-  RETURN_NOTHING,
   RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
   RMQ_MESSAGE_META_TEG,
@@ -45,7 +43,12 @@ import {
   NON_DECLARED_ROUTE,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
-import { MetaTegsScannerService, toRegex } from './common';
+import {
+  MetaTegsScannerService,
+  RMQError,
+  RmqErrorService,
+  toRegex,
+} from './common';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
@@ -66,6 +69,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly moduleRef: ModuleRef,
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
+    private readonly rmqErrorService: RmqErrorService,
 
     @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
     @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
@@ -102,64 +106,46 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     message: IMessage,
     options?: IPublishOptions,
   ): Promise<IReply> {
+    if (!this.replyToQueue) throw Error(INDICATE_REPLY_QUEUE);
+
     await this.initializationCheck();
     const correlationId = getUniqId();
     const timeout =
       options?.timeout ?? this.options.messageTimeout ?? DEFAULT_TIMEOUT;
-    const timerId = setTimeout(() => {
-      this.logger.error(`Message timed out after ${timeout}ms`, {
-        correlationId,
-      });
-      throw new Error(TIMEOUT_ERROR);
-    }, timeout);
 
     return new Promise<IReply>(async (resolve, reject) => {
-      try {
-        if (!this.replyToQueue) throw Error(INDICATE_REPLY_QUEUE);
-        this.sendResponseEmitter.once(correlationId, (msg: Message) => {
-          clearTimeout(timerId);
-          if (msg.properties?.headers?.['-x-error']) {
-            this.logger.error('Received message with error header', {
-              correlationId,
-            });
-            return reject(new Error(RECEIVED_MESSAGE_ERROR));
-          }
-          const content = msg.content;
-          if (content.toString()) {
-            resolve(this.serDes.deserialize(content));
-          } else {
-            this.logger.error(EMPTY_MESSAGE, {
-              correlationId,
-            });
-            reject(new Error(EMPTY_MESSAGE));
-          }
-        });
-        const confirmationFunction = (err: any, ok: Replies.Empty) => {
-          if (err) {
-            clearTimeout(timerId);
-            reject(NACKED);
-          }
-        };
-        await this.rmqNestjsConnectService.publish(
-          {
-            exchange: this.options.exchange.exchange,
-            routingKey: topic,
-            content: this.serDes.serialize(message),
-            options: {
-              replyTo: this.replyToQueue.queue,
-              appId: this.options.serviceName,
-              correlationId,
-              timestamp: new Date().getTime(),
-              ...options,
-            },
-          },
-          confirmationFunction,
-        );
-      } catch (error) {
+      const timerId = setTimeout(() => {
+        reject(new RMQError(TIMEOUT_ERROR));
+      }, timeout);
+      this.sendResponseEmitter.once(correlationId, (msg: Message) => {
         clearTimeout(timerId);
-        this.logger.error('Error publishing message', { correlationId, error });
-        reject(error);
-      }
+        if (msg.properties?.headers?.['-x-error'])
+          return reject(this.rmqErrorService.errorHandler(msg));
+
+        const content = msg.content;
+        if (content.toString()) resolve(this.serDes.deserialize(content));
+      });
+      const confirmationFunction = (err: any, ok: Replies.Empty) => {
+        if (err) {
+          clearTimeout(timerId);
+          reject(new RMQError(NACKED));
+        }
+      };
+      await this.rmqNestjsConnectService.publish(
+        {
+          exchange: this.options.exchange.exchange,
+          routingKey: topic,
+          content: this.serDes.serialize(message),
+          options: {
+            replyTo: this.replyToQueue.queue,
+            appId: this.options.serviceName,
+            correlationId,
+            timestamp: new Date().getTime(),
+            ...options,
+          },
+        },
+        confirmationFunction,
+      );
     });
   }
   public async notify<IMessage>(
@@ -170,70 +156,44 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     await this.initializationCheck();
 
     return new Promise<INotifyReply>(async (resolve, reject) => {
-      try {
-        const confirmationFunction = (err: any, ok: Replies.Empty) => {
-          if (err !== null) {
-            this.logger.error(`Publish failed: ${err.message}`);
-            return reject(NACKED);
-          }
-          resolve({ status: 'ok' });
-        };
+      const confirmationFunction = (err: any, ok: Replies.Empty) => {
+        if (err !== null) {
+          this.logger.error(`Publish failed: ${err.message}`);
+          return reject(NACKED);
+        }
+        resolve({ status: 'ok' });
+      };
 
-        await this.rmqNestjsConnectService.publish(
-          {
-            exchange: this.options.exchange.exchange,
-            routingKey: topic,
-            content: this.serDes.serialize(message),
-            options: {
-              appId: this.options.serviceName,
-              timestamp: new Date().getTime(),
-              ...options,
-            },
+      await this.rmqNestjsConnectService.publish(
+        {
+          exchange: this.options.exchange.exchange,
+          routingKey: topic,
+          content: this.serDes.serialize(message),
+          options: {
+            appId: this.options.serviceName,
+            timestamp: new Date().getTime(),
+            ...options,
           },
-          confirmationFunction,
-        );
+        },
+        confirmationFunction,
+      );
 
-        if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
-          resolve({ status: 'ok' });
-      } catch (err) {
-        this.logger.error(`Notify error: ${err.message}`);
-        reject(err);
-      }
+      if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
+        resolve({ status: 'ok' });
     });
   }
 
   private async listenQueue(message: ConsumeMessage | null): Promise<void> {
     try {
-      if (!message) throw new Error('Received null message');
       const route = this.getRouteByTopic(message.fields.routingKey);
       const consumer = this.getConsumer(route);
       const messageParse = this.deserializeMessage(consumer, message.content);
-      const middlewareResut = await this.executeMiddlewares(
-        consumer,
-        message,
-        messageParse,
-      );
-
-      let result = { error: ERROR_NO_ROUTE };
-      if (consumer.handler) {
-        const interceptorsReversed = await this.interceptorsReverse(
-          consumer,
-          message,
-          messageParse,
-        );
-        result = await this.handleMessage(
-          consumer.handler,
-          messageParse,
-          message,
-        );
-        await this.callReverseFunctions(interceptorsReversed, result, message);
-      }
-
+      const result = await this.handle(message, messageParse, consumer);
       if (message.properties.replyTo)
         await this.sendReply(
           message.properties.replyTo,
           consumer,
-          middlewareResut ?? result,
+          result,
           message.properties.correlationId,
         );
     } catch (error) {
@@ -241,7 +201,45 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       this.rmqNestjsConnectService.nack(message, false, false);
     }
   }
-  private async callReverseFunctions(
+  private async handle(
+    message: ConsumeMessage,
+    messageParse: any,
+    consumer?: MetaTegEnpoint,
+  ): Promise<IResult> {
+    if (!consumer) {
+      return {
+        content: {},
+        headers: this.rmqErrorService.buildError(
+          new RMQError(NON_ROUTE, this.options.serviceName),
+        ),
+      };
+    }
+    const middlewareResut = await this.executeMiddlewares(
+      consumer,
+      message,
+      messageParse,
+    );
+    const interceptorsReversed = await this.interceptorsReverse(
+      consumer,
+      message,
+      messageParse,
+    );
+    if (middlewareResut.content != null) return middlewareResut;
+    if (consumer.handler) {
+      const result = await this.handleMessage(
+        consumer.handler,
+        messageParse,
+        message,
+      );
+      await this.reverseInterceptors(
+        interceptorsReversed,
+        result.content,
+        message,
+      );
+      return result;
+    }
+  }
+  private async reverseInterceptors(
     interceptorsReversed: ReverseFunction[],
     result: any,
     message: ConsumeMessage,
@@ -253,15 +251,20 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     consumer: MetaTegEnpoint,
     message: ConsumeMessage,
     messageParse: any,
-  ): Promise<any> {
+  ): Promise<IResult> {
     const middlewares = this.getMiddlewares(consumer);
-    for (const middleware of middlewares) {
-      const middlewareResut = await middleware.use(message, messageParse);
-      if (middlewareResut != undefined) {
-        consumer.handler = null;
-        return middlewareResut;
+    const result = { content: null, headers: {} };
+    try {
+      for (const middleware of middlewares) {
+        const middlewareResut = await middleware.use(message, messageParse);
+        if (middlewareResut != undefined) {
+          result.content = middlewareResut;
+        }
       }
+    } catch (error) {
+      result.headers = this.rmqErrorService.buildError(error);
     }
+    return result;
   }
   private async interceptorsReverse(
     consumer: MetaTegEnpoint,
@@ -303,22 +306,29 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     handler: IConsumFunction,
     messageParse: string,
     message: ConsumeMessage,
-  ) {
-    const result = await handler(messageParse, message);
-    return result || { info: RETURN_NOTHING };
+  ): Promise<IResult> {
+    const result = { content: {}, headers: {} };
+    try {
+      result.content = (await handler(messageParse, message)) || {};
+    } catch (error) {
+      result.headers = this.rmqErrorService.buildError(error);
+    }
+    return result;
   }
 
   private async sendReply(
     replyTo: string,
     consumer: MetaTegEnpoint,
-    result: any,
+    result: IResult,
     correlationId: string,
   ) {
     const serializedResult =
-      consumer.serdes?.serialize(result) || this.serDes.serialize(result);
+      consumer.serdes?.serialize(result.content) ||
+      this.serDes.serialize(result.content);
     await this.rmqNestjsConnectService.sendToReplyQueue({
       replyTo,
       content: serializedResult,
+      headers: result.headers,
       correlationId,
     });
   }

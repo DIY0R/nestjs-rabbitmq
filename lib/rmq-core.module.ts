@@ -7,10 +7,12 @@ import {
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { RmqGlobalService } from './rmq.global.service';
-import { serDes } from './common';
+import { RmqErrorService, serDes } from './common';
 
 @Global()
-@Module({})
+@Module({
+  providers: [RmqErrorService],
+})
 export class RmqNestjsCoreModule {
   static forRoot(
     configOptions: IRabbitMQConfig,

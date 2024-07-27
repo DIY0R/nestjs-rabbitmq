@@ -1,8 +1,9 @@
-import { Options } from 'amqplib';
+import { MessagePropertyHeaders, Options } from 'amqplib';
 import { LoggerService, ModuleMetadata } from '@nestjs/common';
 import { ISerDes } from './serdes.interface';
 import { TypeRmqInterceptor } from './interceptor.interface';
 import { TypeRmqMiddleware } from './middleware.interface';
+import { IRmqErrorHeaders } from './error.headers.interface';
 
 export interface IQueue {
   queue: string;
@@ -61,7 +62,7 @@ export interface ISendToReplyQueueOptions {
   replyTo: string;
   content: Buffer;
   correlationId: string;
-  options?: Options.Publish;
+  headers: IRmqErrorHeaders | MessagePropertyHeaders;
 }
 export interface IAppOptions {
   logger?: LoggerService;
