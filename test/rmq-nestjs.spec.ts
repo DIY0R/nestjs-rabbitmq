@@ -4,6 +4,8 @@ import { RmqServieController } from './mocks/rmq.controller';
 import { RmqModule, RmqService, TypeChannel } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 import { RETURN_NOTHING } from '../lib/constants';
+import { hostname } from 'node:os';
+import { RMQError } from 'lib/common';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
@@ -72,7 +74,10 @@ describe('RMQe2e', () => {
   describe('rpc exchange', () => {
     it('successful global send()', async () => {
       const obj = { time: '001', fulled: 12 };
-      const { message } = await rmqServieController.sendGlobalRoute(obj);
+      const { message } = await rmqServieController.sendGlobal(
+        obj,
+        'global.rpc',
+      );
       expect(message).toEqual(obj);
     });
 
@@ -87,7 +92,7 @@ describe('RMQe2e', () => {
       const obj = { obj: 1 };
       const topic = 'text.nothing';
       const message = await rmqServieController.sendMessage(obj, topic);
-      expect(message).toEqual({ info: RETURN_NOTHING });
+      expect(message).toEqual({});
     });
 
     it('send topic patern #1 "*"', async () => {
@@ -108,6 +113,33 @@ describe('RMQe2e', () => {
       const topic = 'text.rpc.mix.pool.too';
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
+    });
+    it('error route', async () => {
+      try {
+        const obj = { time: 1 };
+        const topic = 'error.error';
+        await rmqServieController.sendMessage(obj, topic);
+      } catch (error) {
+        expect(error.host).toBe(hostname());
+      }
+    });
+    it('error route with rmqError', async () => {
+      try {
+        const obj = { time: 1 };
+        const topic = 'error.error.rmq';
+        await rmqServieController.sendMessage(obj, topic);
+      } catch (error) {
+        expect((error as RMQError).status).toBe(302);
+      }
+    });
+    it('error with global send();', async () => {
+      try {
+        const obj = { time: 1 };
+        const topic = 'error.error.rmq';
+        await rmqServieController.sendGlobal(obj, topic);
+      } catch (error) {
+        expect((error as RMQError).status).toBe(302);
+      }
     });
   });
   describe('send message to queue', () => {
