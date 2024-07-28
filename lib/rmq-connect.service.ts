@@ -246,12 +246,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  sendToQueue(
+  async sendToQueue(
     queue: string,
     content: Buffer,
     options?: Options.Publish,
-  ): boolean {
+  ): Promise<boolean> {
     try {
+      await this.initializationCheck();
       return this.baseChannel.sendToQueue(queue, content, options);
     } catch (error) {
       throw new Error(`Failed to send message ${error}`);

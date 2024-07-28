@@ -143,9 +143,9 @@ describe('RMQe2e', () => {
     });
   });
   describe('send message to queue', () => {
-    it('send to Queue', () => {
+    it('send to Queue', async () => {
       const obj = { aq: 1121 };
-      const status = rmqServieController.sendToQueue('test-for', obj);
+      const status = await rmqServieController.sendToQueue('test-for', obj);
       expect(status).toBeTruthy();
     });
   });

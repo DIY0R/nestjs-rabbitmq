@@ -44,8 +44,8 @@ export class RmqServieController {
     const message = this.rmqServie.notify<object>('notify.global', obj);
     return message;
   }
-  sendToQueue(queue: string, obj: Record<string, any>) {
-    const status = this.rmqGlobalService.sendToQueue<object>(queue, obj);
+  async sendToQueue(queue: string, obj: Record<string, any>) {
+    const status = await this.rmqGlobalService.sendToQueue<object>(queue, obj);
     return status;
   }
 }

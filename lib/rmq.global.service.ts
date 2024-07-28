@@ -132,12 +132,12 @@ export class RmqGlobalService implements OnModuleInit {
     });
   }
 
-  public sendToQueue<IMessage>(
+  public async sendToQueue<IMessage>(
     queue: string,
     content: IMessage,
     options?: Options.Publish,
-  ): boolean {
-    const status = this.rmqNestjsConnectService.sendToQueue(
+  ): Promise<boolean> {
+    const status = await this.rmqNestjsConnectService.sendToQueue(
       queue,
       this.serDes.serialize(content),
       options,
