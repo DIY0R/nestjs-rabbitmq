@@ -197,11 +197,11 @@ If you have defined `globalBroker` in `forRoot`, you will have access to the RPC
 
 ### Method `sendToQueue`
 
-Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue) method from amqlib, this method differs in that messages go through [Serialization](#serializationdeserialization) before being sent.
+Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_sendToQueue) method from amqlib, this asynchronous method differs in that messages go through [Serialization](#serializationdeserialization) before being sent.
 
 ```ts
- sendToQueue(queue: string, obj:ISend) {
-    const status = this.rmqGlobalService.sendToQueue<ISend>(queue, obj);
+ async sendToQueue(queue: string, obj:ISend) {
+    const status = await this.rmqGlobalService.sendToQueue<ISend>(queue, obj);
     return status;
   }
 ```
@@ -209,7 +209,7 @@ Unlike the standard [sendToQueue](https://amqp-node.github.io/amqplib/channel_ap
 Return either true, meaning “keep sending”, or false, meaning “please wait for a ‘drain’ event”.[See Flow control
 ](https://amqp-node.github.io/amqplib/channel_api.html#flowcontrol)
 
-- **'this.rmqGlobalService.sendToQueue()'** - synchronous function
+- **'this.rmqGlobalService.sendToQueue()'** - asynchronous function
   - queue - queue name
 
 ### Channel
