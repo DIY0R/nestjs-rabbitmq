@@ -187,7 +187,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     try {
       const route = this.getRouteByTopic(message.fields.routingKey);
       const consumer = this.getConsumer(route);
-      const messageParse = this.deserializeMessage(consumer, message.content);
+      const messageParse = this.deserializeMessage(message.content, consumer);
       const result = await this.handle(message, messageParse, consumer);
       if (message.properties.replyTo)
         await this.sendReply(
@@ -291,8 +291,8 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     return this.rmqMessageTegs.get(route) || this.rmqMessageTegs.get(NON_ROUTE);
   }
 
-  private deserializeMessage(consumer: MetaTegEnpoint, content: Buffer) {
-    return consumer.serdes?.deserialize
+  private deserializeMessage(content: Buffer, consumer?: MetaTegEnpoint) {
+    return consumer?.serdes?.deserialize
       ? consumer.serdes.deserialize(content)
       : this.serDes.deserialize(content);
   }
