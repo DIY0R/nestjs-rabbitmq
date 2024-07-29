@@ -1,11 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { RmqServieController } from './mocks/rmq.controller';
-import { RmqModule, RmqService, TypeChannel } from '../lib';
+import { RmqModule, RmqService, TypeChannel, RMQError } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
-import { RETURN_NOTHING } from '../lib/constants';
 import { hostname } from 'node:os';
-import { RMQError } from 'lib/common';
+import { MyGlobalRMQErrorHandler } from './mocks/error.handlers';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
@@ -30,9 +29,12 @@ describe('RMQe2e', () => {
                 queue: '',
                 options: { exclusive: true },
                 consumOptions: { noAck: true },
+                errorHandler: MyGlobalRMQErrorHandler,
               },
+
               messageTimeout: 50000,
               serviceName: 'global srvice',
+
               serDes: {
                 deserialize: (message: Buffer): any =>
                   JSON.parse(message.toString()),
@@ -114,13 +116,13 @@ describe('RMQe2e', () => {
       const { message } = await rmqServieController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
-    it('error route', async () => {
+    it('error route with Error', async () => {
       try {
         const obj = { time: 1 };
         const topic = 'error.error';
         await rmqServieController.sendMessage(obj, topic);
       } catch (error) {
-        expect(error.host).toBe(hostname());
+        expect((error as RMQError).host).toBe(hostname());
       }
     });
     it('error route with rmqError', async () => {
@@ -130,15 +132,18 @@ describe('RMQe2e', () => {
         await rmqServieController.sendMessage(obj, topic);
       } catch (error) {
         expect((error as RMQError).status).toBe(302);
+        expect((error as RMQError).date).toBe(new Date().getMonth().toString());
       }
     });
-    it('error with global send();', async () => {
+
+    it('error route with rmqError global', async () => {
       try {
         const obj = { time: 1 };
         const topic = 'error.error.rmq';
         await rmqServieController.sendGlobal(obj, topic);
       } catch (error) {
         expect((error as RMQError).status).toBe(302);
+        expect((error as RMQError).date).toBe(new Date().getDate().toString());
       }
     });
   });

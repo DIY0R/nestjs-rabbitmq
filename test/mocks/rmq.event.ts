@@ -17,7 +17,7 @@ import {
   EventMiddlewareEndpoint,
   EventMiddlewareEndpointReturn,
 } from './event.middleware';
-import { RMQError } from '../../lib/common';
+import { RMQError } from '../../lib';
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => JSON.parse(message.toString()),
