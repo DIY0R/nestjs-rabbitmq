@@ -4,11 +4,15 @@ import { ISerDes } from './serdes.interface';
 import { TypeRmqInterceptor } from './interceptor.interface';
 import { TypeRmqMiddleware } from './middleware.interface';
 import { IRmqErrorHeaders } from './error.headers.interface';
+import { RMQErrorHandler } from '../common';
 
 export interface IQueue {
   queue: string;
   options?: Options.AssertQueue;
   consumOptions?: Options.Consume;
+}
+export interface IReplyQueue extends IQueue {
+  errorHandler?: typeof RMQErrorHandler;
 }
 export enum TypeQueue {
   QUEUE,
@@ -33,7 +37,7 @@ export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
 
 export interface IMessageBroker {
   exchange: IExchange;
-  replyTo?: IQueue;
+  replyTo?: IReplyQueue;
   queue?: IQueue;
   serDes?: ISerDes;
   interceptor?: TypeRmqInterceptor[];
@@ -66,15 +70,14 @@ export interface ISendToReplyQueueOptions {
 }
 export interface IAppOptions {
   logger?: LoggerService;
-
-  errorHandler?: object;
   logMessages: boolean;
 }
 export interface IGlobalBroker {
-  replyTo: IQueue;
+  replyTo: IReplyQueue;
   messageTimeout?: number;
   serviceName?: string;
   serDes?: ISerDes;
+  errorssHandler?: typeof RMQErrorHandler;
 }
 
 export interface ISocketOptions {

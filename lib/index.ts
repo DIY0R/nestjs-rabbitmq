@@ -3,4 +3,5 @@ export * from './rmq.service';
 export * from './rmq.global.service';
 export * from './decorators';
 export * from './interfaces';
+export * from './common';
 export * from './constants';

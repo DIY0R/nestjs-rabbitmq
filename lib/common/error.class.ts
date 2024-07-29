@@ -1,9 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Message, MessagePropertyHeaders } from 'amqplib';
-import { IRmqErrorHeaders } from 'lib/interfaces';
+import { RMQ_APP_OPTIONS, RMQ_BROKER_OPTIONS } from '../constants';
+import {
+  IGlobalOptions,
+  IMessageBroker,
+  IRmqErrorHeaders,
+} from '../interfaces';
 import { hostname } from 'os';
+
 @Injectable()
-export class RmqErrorService {
+export class RmqErrorGlobalService {
+  @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions;
+
   public buildError(error: Error | RMQError) {
     if (!error) return null;
 
@@ -23,11 +31,30 @@ export class RmqErrorService {
 
   public errorHandler(msg: Message): any {
     const { headers } = msg.properties;
-    return RMQErrorHandler.handle(headers);
+    const errorHandler = this.globalOptions.globalBroker.replyTo.errorHandler;
+
+    return errorHandler
+      ? errorHandler.handle(headers)
+      : RMQErrorHandler.handle(headers);
   }
 
   private isRMQError(error: Error | RMQError): boolean {
     return (error as RMQError).status !== undefined;
+  }
+}
+@Injectable()
+export class RmqErrorService extends RmqErrorGlobalService {
+  constructor(
+    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
+  ) {
+    super();
+  }
+  public errorHandler(msg: Message): RMQError {
+    const { headers } = msg.properties;
+    const errorHandler = this.options.replyTo.errorHandler;
+    return errorHandler
+      ? errorHandler.handle(headers)
+      : RMQErrorHandler.handle(headers);
   }
 }
 export class RMQError extends Error {

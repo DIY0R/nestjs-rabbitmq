@@ -23,10 +23,7 @@ import {
 } from './constants';
 
 @Module({
-  providers: [
-    { provide: MODULE_TOKEN, useFactory: getUniqId },
-    RmqErrorService,
-  ],
+  providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
 })
 export class RmqModule {
   static forRoot(
@@ -60,6 +57,7 @@ export class RmqModule {
         ...interceptors,
         RmqService,
         MetaTegsScannerService,
+        RmqErrorService,
       ],
       exports: [RmqService],
     };

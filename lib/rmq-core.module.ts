@@ -7,11 +7,11 @@ import {
 } from './interfaces';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import { RmqGlobalService } from './rmq.global.service';
-import { RmqErrorService, serDes } from './common';
+import { RmqErrorGlobalService, serDes } from './common';
 
 @Global()
 @Module({
-  providers: [RmqErrorService],
+  providers: [RmqErrorGlobalService],
 })
 export class RmqNestjsCoreModule {
   static forRoot(
