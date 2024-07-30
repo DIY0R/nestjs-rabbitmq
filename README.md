@@ -1,5 +1,7 @@
 # Nest.js with RabbitMQ
 
+![logo](https://github.com/DIY0R/nestjs-rabbitmq/raw/main/img/logo.png)
+
 [![version](https://img.shields.io/npm/v/@diy0r/nestjs-rabbitmq.svg)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
 [![license](https://badgen.net/npm/license/@diy0r/nestjs-rabbitmq)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
 [![checker](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml)
@@ -28,6 +30,10 @@
     - [send(RPC) and notify - methods](#send-and-notify---methods)
     - [healthCheck, ack and nack - methods](#healthcheckack-and-nack---methods)
   - [Serialization/Deserialization in specific module](#serializationdeserialization-in-specific-module)
+- [Throw error and handling](#throw-error-and-handling)
+  - [RMQErrorHandler](#rmqerrorhandler)
+  - [Catch Error](#catch-error)
+  - [Throw error](#throw-error)
 
 ## Installation
 
@@ -123,9 +129,10 @@ In `forRoot(syncOptions, appOptions)`, we pass two arguments for the connection 
       - **queue** - queue name. It's recommended to leave it as an empty string so RabbitMQ will automatically generate a unique name.
       - **options** - options passed as the second parameter in [assertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue)
       - **consumOptions** - configure the consumer with a callback that will be invoked with each message. [See](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+      - **errorHandler** (class) - custom error handler for dealing with errors from replies that extends [`RMQErrorHandler`](#throw-error-and-handling).
     - **messageTimeout** - Number of milliseconds the `send` method will wait for the response before a timeout error. Default is 40,000.
     - **serviceName** - an arbitrary identifier for the originating application
-    - **socketOptions** - here you can configure SSL/TLS [see](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
+    - **socketOptions** - here you can configure SSL/TLS. See [SSL/TLS](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
 
 We recommend specifying the `TypeChannel.CONFIR_CHANNEL` channel type to get more accurate statuses for your requests.
 
@@ -295,9 +302,10 @@ In the `forFeature(MessageBroker)` method, you need to pass an object of type `I
   - **options** - The default queue parameters from `Options.AssertQueue`. See [Channel AssertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue).
   - **consumOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
 - **replyTo** - needed for setting up the `replyTo` queue (optional)
-  - queue - The name of the queue, which should be unique.
-  - options - The default queue parameters from `Options.AssertQueue`. See [Channel AssertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue).
-  - consumOptions - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+  - **queue** - The name of the queue, which should be unique.
+  - **options** - The default queue parameters from `Options.AssertQueue`. See [Channel AssertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue).
+  - **consumOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+  - **errorHandler** (class) - custom error handler for dealing with errors from replies that extends [`RMQErrorHandler`](#throw-error-and-handling).
 - **serviceName** - The name of your service. (optional)
 - **messageTimeout** - The timeout for waiting for a response, with a default value of 40000ms. (optional)
 
@@ -649,4 +657,55 @@ export class MyRmqEvents {
     return { message: obj };
   }
 }
+```
+
+## Throw error and handling
+
+If you want to use a custom error handler to handle errors in responses, use the errorHandler property in the `replyTo` parameters in [`forRoot`](#module-initialization) and [`forFeature`](#module-specific-configuration-forfeature), and pass a class that extends `RMQErrorHandler`
+
+### RMQErrorHandler
+
+If you call `rmqGlobalService.send`, the `errorHandler` from `forRoot` will be used, and if you call `rmqService.send`, the `errorHandler` from `forFeature` will be used.
+
+```ts
+export class MyRMQErrorHandler extends RMQErrorHandler {
+  public static handle(
+    headers: IRmqErrorHeaders | MessagePropertyHeaders,
+  ): Error | RMQError {
+    // do something ...
+    return new RMQError(
+      headers['-x-error'],
+      headers['-x-service'],
+      headers['-x-status-code'],
+      headers['-x-host'],
+      headers['-x-date'],
+    );
+  }
+}
+```
+
+### Catch Error
+
+```ts
+async sendMessage (obj: ISend){
+  try {
+    const message = await this.rmqGlobalService.send<ISend, IReply>(
+      'user.rpc',
+      obj,
+    );
+  } catch (error: RMQError) {
+    //...
+  }
+};
+```
+
+### Throw error
+
+```ts
+  @MessageRoute()
+  handleTextText(obj: ISend, consumeMessage: ConsumeMessage) {
+    throw new RMQError('Error message', 2);
+    //or
+    throw new Error('Error message');
+  }
 ```
