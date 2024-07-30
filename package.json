@@ -1,6 +1,6 @@
 {
   "name": "@diy0r/nestjs-rabbitmq",
-  "version": "0.24.1",
+  "version": "0.25.6",
   "description": "Nestjs rabbitMQ module",
   "author": "Sobirov Diyorbek <sobirovdiyorkind@gmail.com>",
   "private": false,
