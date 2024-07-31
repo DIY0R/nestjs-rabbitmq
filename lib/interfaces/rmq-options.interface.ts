@@ -28,10 +28,14 @@ export interface IExchange {
   options?: Options.AssertExchange;
 }
 
-export type IRabbitMQConfig = string | Options.Connect;
+export type IRMQConnectConfig = string | Options.Connect;
 
-export interface IRabbitMQConfigAsync extends Pick<ModuleMetadata, 'imports'> {
-  useFactory?: (...args: any[]) => Promise<IRabbitMQConfig> | IRabbitMQConfig;
+export interface IRMQOptions {
+  connectConfig: IRMQConnectConfig;
+  extendedOptions?: IRMQExtendedOptions;
+}
+export interface IRMQOptionsAsync extends Pick<ModuleMetadata, 'imports'> {
+  useFactory?: (...args: any[]) => Promise<IRMQOptions> | IRMQOptions;
   inject?: any[];
 }
 
@@ -94,7 +98,7 @@ export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
   cert: Buffer | string;
   key: Buffer | string;
 }
-export interface IGlobalOptions {
+export interface IRMQExtendedOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
   socketOptions?: ISocketOptionsSSLPFX | ISocketOptionsSSLKEY;

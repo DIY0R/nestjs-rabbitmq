@@ -6,7 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import {
-  IGlobalOptions,
+  IRMQExtendedOptions,
   IMessageBroker,
   INotifyReply,
   IPublishOptions,
@@ -18,6 +18,7 @@ import {
   TypeQueue,
   TypeRmqInterceptor,
   TypeRmqMiddleware,
+  IRMQOptions,
 } from './interfaces';
 import {
   CallbackFunctionVariadic,
@@ -27,7 +28,6 @@ import {
 } from './interfaces/metategs';
 import {
   DEFAULT_TIMEOUT,
-  EMPTY_OBJECT_MESSAGE,
   INDICATE_REPLY_QUEUE,
   INITIALIZATION_STEP_DELAY,
   INTERCEPTORS,
@@ -35,12 +35,12 @@ import {
   MODULE_TOKEN,
   NACKED,
   NON_ROUTE,
-  RMQ_APP_OPTIONS,
   RMQ_BROKER_OPTIONS,
   RMQ_MESSAGE_META_TEG,
   SERDES,
   TIMEOUT_ERROR,
   NON_DECLARED_ROUTE,
+  RMQ_OPTIONS,
 } from './constants';
 import { ConsumeMessage, Message, Replies, Channel, Options } from 'amqplib';
 import {
@@ -58,7 +58,7 @@ import { ModuleRef } from '@nestjs/core';
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
   private sendResponseEmitter: EventEmitter = new EventEmitter();
-
+  private extendedOptions: IRMQExtendedOptions = null;
   private rmqMessageTegs: IMetaTegsMap = null;
   private replyToQueue: Replies.AssertQueue = null;
   private exchange: Replies.AssertExchange = null;
@@ -70,17 +70,18 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly metaTegsScannerService: MetaTegsScannerService,
     private readonly rmqErrorService: RmqErrorService,
-
+    @Inject(RMQ_OPTIONS)
+    private readonly rmQoptions: IRMQOptions,
     @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
-    @Inject(RMQ_APP_OPTIONS) private readonly globalOptions: IGlobalOptions,
     @Inject(SERDES) private readonly serDes: ISerDes,
     @Inject(INTERCEPTORS) private readonly interceptors: TypeRmqInterceptor[],
     @Inject(MIDDLEWARES) private readonly middlewares: TypeRmqMiddleware[],
     @Inject(MODULE_TOKEN) private readonly moduleToken: string,
   ) {
-    this.logger = globalOptions.appOptions?.logger
-      ? globalOptions.appOptions?.logger
-      : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
+    this.extendedOptions = rmQoptions.extendedOptions ?? {};
+    this.logger = rmQoptions.extendedOptions?.appOptions?.logger
+      ? rmQoptions.extendedOptions.appOptions?.logger
+      : new RQMColorLogger(this.extendedOptions.appOptions?.logMessages);
   }
 
   async onModuleInit() {
@@ -178,7 +179,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
         confirmationFunction,
       );
 
-      if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
+      if (this.extendedOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
         resolve({ status: 'ok' });
     });
   }

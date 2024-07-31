@@ -1,20 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Message, MessagePropertyHeaders } from 'amqplib';
-import { RMQ_APP_OPTIONS, RMQ_BROKER_OPTIONS } from '../constants';
-import {
-  IGlobalOptions,
-  IMessageBroker,
-  IRmqErrorHeaders,
-} from '../interfaces';
+import { RMQ_BROKER_OPTIONS, RMQ_OPTIONS } from '../constants';
+import { IMessageBroker, IRmqErrorHeaders, IRMQOptions } from '../interfaces';
 import { hostname } from 'os';
 
 @Injectable()
 export class RmqErrorGlobalService {
-  @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions;
+  @Inject(RMQ_OPTIONS) private rmQoptions: IRMQOptions;
 
   public buildError(error: Error | RMQError) {
     if (!error) return null;
-
     let errorHeaders = {};
     errorHeaders['-x-error'] = error.message;
     errorHeaders['-x-host'] = hostname();
@@ -31,7 +26,8 @@ export class RmqErrorGlobalService {
 
   public errorHandler(msg: Message): any {
     const { headers } = msg.properties;
-    const errorHandler = this.globalOptions.globalBroker.replyTo.errorHandler;
+    const errorHandler =
+      this.rmQoptions.extendedOptions?.globalBroker.replyTo.errorHandler;
 
     return errorHandler
       ? errorHandler.handle(headers)

@@ -14,22 +14,10 @@ import {
   CONNECT_FAILED_MESSAGE,
   INITIALIZATION_STEP_DELAY,
   RECONNECTION_INTERVAL,
-  RMQ_APP_OPTIONS,
-  RMQ_CONNECT_OPTIONS,
+  RMQ_OPTIONS,
   ROOT_MODULE_DECLARED,
   SUCCESSFUL_CONNECT,
 } from './constants';
-import {
-  IRabbitMQConfig,
-  IExchange,
-  IQueue,
-  TypeQueue,
-  IBindQueue,
-  ISendMessage,
-  ISendToReplyQueueOptions,
-  IGlobalOptions,
-  TypeChannel,
-} from './interfaces';
 import {
   Channel,
   ConfirmChannel,
@@ -39,7 +27,19 @@ import {
   Replies,
   connect,
 } from 'amqplib';
-import { RQMColorLogger } from './common/logger';
+import {
+  IRMQConnectConfig,
+  IExchange,
+  IQueue,
+  TypeQueue,
+  IBindQueue,
+  ISendMessage,
+  ISendToReplyQueueOptions,
+  TypeChannel,
+  IRMQOptions,
+} from './interfaces';
+
+import { RQMColorLogger } from './common';
 
 @Injectable()
 export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
@@ -50,16 +50,16 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private logger: LoggerService;
   private isInitialized = false;
   constructor(
-    @Inject(RMQ_CONNECT_OPTIONS) private readonly options: IRabbitMQConfig,
-    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
+    @Inject(RMQ_OPTIONS)
+    private readonly rmQoptions: IRMQOptions,
   ) {
-    this.logger = globalOptions.appOptions?.logger
-      ? globalOptions.appOptions?.logger
-      : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
+    this.logger = rmQoptions.extendedOptions?.appOptions?.logger
+      ? rmQoptions.extendedOptions.appOptions.logger
+      : new RQMColorLogger(rmQoptions.extendedOptions?.appOptions?.logMessages);
   }
   async onModuleInit(): Promise<void> {
     if (this.isInitialized) throw Error(ROOT_MODULE_DECLARED);
-    await this.setUpConnect(this.options);
+    await this.setUpConnect(this.rmQoptions.connectConfig);
     await this.createChannels();
 
     this.isInitialized = true;
@@ -196,11 +196,11 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async setUpConnect(options: IRabbitMQConfig): Promise<void> {
+  private async setUpConnect(connectConfig: IRMQConnectConfig): Promise<void> {
     try {
       this.connection = await connect(
-        options,
-        this.globalOptions.socketOptions,
+        connectConfig,
+        this.rmQoptions.extendedOptions?.socketOptions,
       );
       this.isConnected = true;
       this.logger.log(SUCCESSFUL_CONNECT);
@@ -208,7 +208,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       this.connection.on(CLOSE_EVENT, (err) => {
         this.isConnected = false;
         this.logger.error(`${CLOSE_MESSAGE}: ${err.message}`);
-        this.reconnect(options);
+        this.reconnect(connectConfig);
       });
 
       this.connection.on(CONNECT_ERROR, (err) => {
@@ -222,7 +222,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async reconnect(options: IRabbitMQConfig): Promise<void> {
+  private async reconnect(options: IRMQConnectConfig): Promise<void> {
     this.logger.log('Attempting to reconnect...');
     setTimeout(async () => {
       try {
@@ -236,7 +236,8 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private async createChannels() {
     try {
       this.baseChannel =
-        this.globalOptions?.typeChannel == TypeChannel.CONFIRM_CHANNEL
+        this.rmQoptions.extendedOptions?.typeChannel ==
+        TypeChannel.CONFIRM_CHANNEL
           ? await this.createConfirmChannel()
           : await this.createChannel();
 

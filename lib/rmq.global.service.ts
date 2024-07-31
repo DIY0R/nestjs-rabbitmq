@@ -1,3 +1,4 @@
+import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
 import {
   ConsumeMessage,
   Message,
@@ -6,24 +7,24 @@ import {
   Options,
   ConfirmChannel,
 } from 'amqplib';
-import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
 import { EventEmitter } from 'stream';
+import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
-  IGlobalOptions,
+  IRMQExtendedOptions,
   INotifyReply,
   IPublishOptions,
   ISerDes,
   TypeChannel,
   TypeQueue,
+  IRMQOptions,
 } from './interfaces';
-import { RmqNestjsConnectService } from './rmq-connect.service';
+
 import {
   DEFAULT_TIMEOUT,
   INDICATE_REPLY_QUEUE_GLOBAL,
   INITIALIZATION_STEP_DELAY,
   NACKED,
-  RMQ_APP_OPTIONS,
-  SERDES,
+  RMQ_OPTIONS,
   TIMEOUT_ERROR,
 } from './constants';
 
@@ -32,27 +33,30 @@ import {
   RMQError,
   RmqErrorGlobalService,
   RQMColorLogger,
+  defaultSerDes,
 } from './common';
 
 export class RmqGlobalService implements OnModuleInit {
   private replyToQueue: Replies.AssertQueue = null;
+  private extendedOptions: IRMQExtendedOptions = null;
+  private serDes: ISerDes = defaultSerDes;
   private sendResponseEmitter: EventEmitter = new EventEmitter();
   private logger: LoggerService;
   private isInitialized = false;
 
   constructor(
+    @Inject(RMQ_OPTIONS) private readonly rmQoptions: IRMQOptions,
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly rmqErrorGlobalService: RmqErrorGlobalService,
-
-    @Inject(RMQ_APP_OPTIONS) private globalOptions: IGlobalOptions,
-    @Inject(SERDES) private readonly serDes: ISerDes,
   ) {
-    this.logger = globalOptions.appOptions?.logger
-      ? globalOptions.appOptions.logger
-      : new RQMColorLogger(this.globalOptions.appOptions?.logMessages);
+    this.extendedOptions = rmQoptions.extendedOptions ?? {};
+    this.serDes = this.extendedOptions?.globalBroker?.serDes ?? defaultSerDes;
+    this.logger = rmQoptions.extendedOptions?.appOptions?.logger
+      ? rmQoptions.extendedOptions.appOptions.logger
+      : new RQMColorLogger(this.extendedOptions?.appOptions?.logMessages);
   }
   async onModuleInit() {
-    if (this.globalOptions?.globalBroker?.replyTo) await this.replyQueue();
+    if (this.extendedOptions?.globalBroker?.replyTo) await this.replyQueue();
     this.isInitialized = true;
   }
   get channel(): Promise<Channel | ConfirmChannel> {
@@ -67,7 +71,7 @@ export class RmqGlobalService implements OnModuleInit {
     try {
       if (!this.replyToQueue) throw Error(INDICATE_REPLY_QUEUE_GLOBAL);
       await this.initializationCheck();
-      const { messageTimeout, serviceName } = this.globalOptions.globalBroker;
+      const { messageTimeout, serviceName } = this.extendedOptions.globalBroker;
       return new Promise<IReply>(async (resolve, reject) => {
         const correlationId = getUniqId();
         const timeout = options?.timeout ?? messageTimeout ?? DEFAULT_TIMEOUT;
@@ -125,14 +129,14 @@ export class RmqGlobalService implements OnModuleInit {
           routingKey: topic,
           content: this.serDes.serialize(message),
           options: {
-            appId: this.globalOptions?.globalBroker?.serviceName ?? '',
+            appId: this.extendedOptions?.globalBroker?.serviceName ?? '',
             timestamp: new Date().getTime(),
             ...options,
           },
         },
         confirmationFunction,
       );
-      if (this.globalOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
+      if (this.extendedOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
         resolve({ status: 'ok' });
     });
   }
@@ -165,12 +169,12 @@ export class RmqGlobalService implements OnModuleInit {
   private async replyQueue() {
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
-      this.globalOptions.globalBroker.replyTo,
+      this.extendedOptions.globalBroker.replyTo,
     );
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
       this.listenReplyQueue.bind(this),
-      this.globalOptions.globalBroker.replyTo.consumOptions,
+      this.extendedOptions.globalBroker.replyTo.consumOptions,
     );
   }
   private async initializationCheck() {

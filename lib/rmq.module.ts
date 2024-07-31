@@ -8,13 +8,8 @@ import {
   providersInjectionArr,
 } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
-import { serDes } from './common';
-import {
-  IMessageBroker,
-  IRabbitMQConfigAsync,
-  IRabbitMQConfig,
-  IGlobalOptions,
-} from './interfaces';
+import { defaultSerDes } from './common';
+import { IMessageBroker, IRMQOptions, IRMQOptionsAsync } from './interfaces';
 import {
   MIDDLEWARES,
   MODULE_TOKEN,
@@ -26,22 +21,16 @@ import {
   providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
 })
 export class RmqModule {
-  static forRoot(
-    configOptions: IRabbitMQConfig,
-    globalOptions?: IGlobalOptions,
-  ): DynamicModule {
+  static forRoot(rmQoptions: IRMQOptions): DynamicModule {
     return {
       module: RmqModule,
-      imports: [RmqNestjsCoreModule.forRoot(configOptions, globalOptions)],
+      imports: [RmqNestjsCoreModule.forRoot(rmQoptions)],
     };
   }
-  static forRootAsync(
-    configOptions: IRabbitMQConfigAsync,
-    globalOptions?: IGlobalOptions,
-  ): DynamicModule {
+  static forRootAsync(rmQoptionsAsync: IRMQOptionsAsync): DynamicModule {
     return {
       module: RmqModule,
-      imports: [RmqNestjsCoreModule.forRootAsync(configOptions, globalOptions)],
+      imports: [RmqNestjsCoreModule.forRootAsync(rmQoptionsAsync)],
     };
   }
 
@@ -52,7 +41,7 @@ export class RmqModule {
       imports: [DiscoveryModule],
       providers: [
         { provide: RMQ_BROKER_OPTIONS, useValue: options },
-        { provide: SERDES, useValue: options.serDes ?? serDes },
+        { provide: SERDES, useValue: options.serDes ?? defaultSerDes },
         { provide: MIDDLEWARES, useValue: options.middlewares ?? [] },
         ...interceptors,
         RmqService,
