@@ -13,40 +13,41 @@ describe('RMQe2e', () => {
   beforeAll(async () => {
     const apiModule = await Test.createTestingModule({
       imports: [
-        RmqModule.forRoot(
-          {
-            username: 'for-test',
-            password: 'for-test',
-            hostname: 'localhost',
-            port: 5672,
-            vhost: 'local',
-            protocol: 'amqp',
-          },
-          {
-            typeChannel: TypeChannel.CONFIRM_CHANNEL,
-            globalBroker: {
-              replyTo: {
-                queue: '',
-                options: { exclusive: true },
-                consumOptions: { noAck: true },
-                errorHandler: MyGlobalRMQErrorHandler,
+        RmqModule.forRootAsync({
+          useFactory: async () => ({
+            connectConfig: {
+              username: 'for-test',
+              password: 'for-test',
+              hostname: 'localhost',
+              port: 5672,
+              vhost: 'local',
+              protocol: 'amqp',
+            },
+            extendedOptions: {
+              typeChannel: TypeChannel.CONFIRM_CHANNEL,
+              globalBroker: {
+                replyTo: {
+                  queue: '',
+                  options: { exclusive: true },
+                  consumOptions: { noAck: true },
+                  errorHandler: MyGlobalRMQErrorHandler,
+                },
+                messageTimeout: 50000,
+                serviceName: 'global srvice',
+                serDes: {
+                  deserialize: (message: Buffer): any =>
+                    JSON.parse(message.toString()),
+                  serialize: (message: any): Buffer =>
+                    Buffer.from(JSON.stringify(message)),
+                },
               },
-
-              messageTimeout: 50000,
-              serviceName: 'global srvice',
-
-              serDes: {
-                deserialize: (message: Buffer): any =>
-                  JSON.parse(message.toString()),
-                serialize: (message: any): Buffer =>
-                  Buffer.from(JSON.stringify(message)),
+              socketOptions: {
+                clientProperties: { connection_name: 'myFriendlyName' },
               },
             },
-            socketOptions: {
-              clientProperties: { connection_name: 'myFriendlyName' },
-            },
-          },
-        ),
+          }),
+          inject: [],
+        }),
         ConnectionMockModule,
       ],
     }).compile();
