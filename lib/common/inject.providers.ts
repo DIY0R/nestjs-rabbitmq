@@ -5,7 +5,7 @@ import { INTERCEPTORS } from '../../lib/constants';
 type AbstractConstructor<T> = abstract new (...args: any[]) => T;
 
 export const providersInjectionArr = <T>(
-  interceptors: AbstractConstructor<T>[],
+  interceptors: AbstractConstructor<T>[] = [],
 ): Provider[] => {
   const interceptorProviders: ClassProvider[] = interceptors.map(
     (useClass) => ({ provide: getUniqId(), useClass: useClass as Type<T> }),
