@@ -15,7 +15,7 @@ describe('RMQe2e', () => {
       imports: [
         RmqModule.forRootAsync({
           useFactory: async () => ({
-            connectConfig: {
+            connectOptions: {
               username: 'for-test',
               password: 'for-test',
               hostname: 'localhost',

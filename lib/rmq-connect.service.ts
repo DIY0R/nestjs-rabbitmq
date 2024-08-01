@@ -59,7 +59,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   }
   async onModuleInit(): Promise<void> {
     if (this.isInitialized) throw Error(ROOT_MODULE_DECLARED);
-    await this.setUpConnect(this.rmQoptions.connectConfig);
+    await this.setUpConnect(this.rmQoptions.connectOptions);
     await this.createChannels();
 
     this.isInitialized = true;
@@ -196,10 +196,10 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async setUpConnect(connectConfig: IRMQConnectConfig): Promise<void> {
+  private async setUpConnect(connectOptions: IRMQConnectConfig): Promise<void> {
     try {
       this.connection = await connect(
-        connectConfig,
+        connectOptions,
         this.rmQoptions.extendedOptions?.socketOptions,
       );
       this.isConnected = true;
@@ -208,7 +208,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       this.connection.on(CLOSE_EVENT, (err) => {
         this.isConnected = false;
         this.logger.error(`${CLOSE_MESSAGE}: ${err.message}`);
-        this.reconnect(connectConfig);
+        this.reconnect(connectOptions);
       });
 
       this.connection.on(CONNECT_ERROR, (err) => {

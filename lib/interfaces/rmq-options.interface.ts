@@ -31,7 +31,7 @@ export interface IExchange {
 export type IRMQConnectConfig = string | Options.Connect;
 
 export interface IRMQOptions {
-  connectConfig: IRMQConnectConfig;
+  connectOptions: IRMQConnectConfig;
   extendedOptions?: IRMQExtendedOptions;
 }
 export interface IRMQOptionsAsync extends Pick<ModuleMetadata, 'imports'> {
