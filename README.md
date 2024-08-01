@@ -14,7 +14,7 @@
 - [Module Initialization](#module-initialization)
   - [ForRoot](#forroot)
   - [ForRootAsync - Async initialization](#forrootasync-async-initialization)
-  - [Connect via URL](#connect-via-url)
+  - [Connect via URI](#connect-via-uri)
 - [RmqGlobalService](#rmqglobalservice)
   - [notify](#method-notify-if-you-want-to-just-notify-services)
   - [send (RPC)](#method-send)
@@ -50,9 +50,9 @@ In your root module, import `RmqModule`:
 ### ForRoot
 
 ```typescript
-import { RmqModule, IRabbitMQConfig } from '@diy0r/nestjs-rabbitmq';
+import { RmqModule, IRMQExtendedOptions } from '@diy0r/nestjs-rabbitmq';
 
-const appOptions: IGlobalOptions = {
+const extendedOptions: IRMQExtendedOptions = {
   typeChannel: TypeChannel.CONFIR_CHANNEL,
   globalBroker: {
     replyTo: {
@@ -61,7 +61,6 @@ const appOptions: IGlobalOptions = {
       consumOptions: { noAck: true },
     },
     messageTimeout: 50000,
-    serviceName: 'global service',
   },
   socketOptions: {
     clientProperties: { connection_name: 'myFriendlyName' },
@@ -70,17 +69,17 @@ const appOptions: IGlobalOptions = {
 
 @Module({
   imports: [
-    RmqModule.forRoot(
-      {
-        username: 'for-test',
-        password: 'for-test',
+    RmqModule.forRoot({
+      connectOptions: {
+        username: 'username',
+        password: 'password',
         hostname: 'localhost',
         port: 5672,
-        vhost: 'local',
+        vhost: '/',
         protocol: 'amqp',
       },
-      appOptions,
-    ),
+      extendedOptions, //optional
+    }),
   ],
   providers: [SomeService],
 })
@@ -90,49 +89,57 @@ export class AppModule {}
 ### ForRootAsync (Async initialization)
 
 ```typescript
-import { RmqModule, IRabbitMQConfigAsync } from '@diy0r/nestjs-rabbitmq';
-const asyncOptions: IRabbitMQConfigAsync = {
-  useFactory: (...args: any[]) => ({
-    username: 'for-test',
-    password: 'for-test',
-    hostname: 'localhost',
-    port: 5672,
-    vhost: 'local',
-    protocol: 'amqp',
-  }),
-  inject: [],
-};
 @Module({
-  imports: [RmqModule.forRootAsync(asyncOptions, appOptions)],
+  imports: [
+    RmqModule.forRootAsync({
+      useFactory: async (...providers: any[]) => ({
+        connectOptions: {
+          username: 'username',
+          password: 'password',
+          hostname: 'localhost',
+          port: 5672,
+          vhost: '/',
+          protocol: 'amqp',
+        },
+        extendedOptions, //optional
+      }),
+      inject: [],
+      imports: [],
+    }),
+  ],
   providers: [SomeService],
 })
 export class AppModule {}
 ```
 
-### Connect via URL
+### Connect via URI
 
-You can also connect using the standard URL. For more information, see the [RabbitMQ URI Specification](https://www.rabbitmq.com/docs/uri-spec).
+You can also connect using the standard URI. For more information, see the [RabbitMQ URI Specification](https://www.rabbitmq.com/docs/uri-spec).
 
 ```typescript
-RmqModule.forRoot('amqp://for-test:for-test@localhost:5672/local', appOptions);
+RmqModule.forRoot({
+  connectOptions: 'amqp://username:password@localhost:5672/',
+  extendedOptions, //optional
+});
 ```
 
 <br/>
-In `forRoot(syncOptions, appOptions)`, we pass two arguments for the connection and an optional argument for environment settings:
+In forRoot({ connectOptions, extendedOptions }), we pass an object consisting of two parameters. The first, connectOptions, is used for connections, and the second, extendedOptions, is for additional settings.
 
-- **syncOptions** - standard parameters [amqlib.connect](https://amqp-node.github.io/amqplib/channel_api.html#connect) for connection. Parameters can be an object or a URL.
-- **appOptions** - environment settings (optional)
+- **connectOptions** - standard parameters [amqlib.connect](https://amqp-node.github.io/amqplib/channel_api.html#connect) for connection. Parameters can be an object or a URI.
+- **extendedOptions** - environment settings (optional)
 
   - **typeChannel** - [channel type](https://amqp-node.github.io/amqplib/channel_api.html#channels), default is `TypeChannel.CHANNEL`
+  - **socketOptions** - here you can configure SSL/TLS. See [SSL/TLS](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
   - **globalBroker** - specify if you want to use RPC from `RmqGlobalService`
     - **replyTo** - needed for setting up the `replyTo` queue
       - **queue** - queue name. It's recommended to leave it as an empty string so RabbitMQ will automatically generate a unique name.
       - **options** - options passed as the second parameter in [assertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue)
       - **consumOptions** - configure the consumer with a callback that will be invoked with each message. [See](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
       - **errorHandler** (class) - custom error handler for dealing with errors from replies that extends [`RMQErrorHandler`](#throw-error-and-handling).
+    - **serDes** (object) - The serDes parameter is an object that defines serialization and deserialization functions for handling messages. [See](#serializationdeserialization)
     - **messageTimeout** - Number of milliseconds the `send` method will wait for the response before a timeout error. Default is 40,000.
     - **serviceName** - an arbitrary identifier for the originating application
-    - **socketOptions** - here you can configure SSL/TLS. See [SSL/TLS](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
 
 We recommend specifying the `TypeChannel.CONFIR_CHANNEL` channel type to get more accurate statuses for your requests.
 
@@ -235,12 +242,16 @@ If you want access to the standard RabbitMQ channel, you always have access to a
 By default, messages are parsed using the JSON.parse method when they are received and converted to a string using JSON.stringify when they are published. If you want to change this behavior you can use your own parsers.
 
 ```ts
-const appOptions: IGlobalOptions = {
-  serDes: {
-    deserialize: (message: Buffer): any => OtherDeserializer(message),
-    serialize: (message: any): Buffer => OtherSerialize(message),
+const extendedOptions: IRMQExtendedOptions = {
+  typeChannel: TypeChannel.CONFIR_CHANNEL,
+  globalBroker: {
+    serDes: {
+      deserialize: (message: Buffer): any => OtherDeserializer(message),
+      serialize: (message: any): Buffer => OtherSerialize(message),
+    },
+    //...
   },
-  ...
+  //...
 };
 ```
 
