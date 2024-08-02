@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Message, MessagePropertyHeaders } from 'amqplib';
 import { RMQ_BROKER_OPTIONS, RMQ_OPTIONS } from '../constants';
-import { IMessageBroker, IRmqErrorHeaders, IRMQOptions } from '../interfaces';
+import { IModuleBroker, IRmqErrorHeaders, IRMQOptions } from '../interfaces';
 import { hostname } from 'os';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class RmqErrorGlobalService {
 @Injectable()
 export class RmqErrorService extends RmqErrorGlobalService {
   constructor(
-    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
+    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IModuleBroker,
   ) {
     super();
   }

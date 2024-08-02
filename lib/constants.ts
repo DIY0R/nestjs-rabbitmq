@@ -1,11 +1,10 @@
 import { INTERCEPTORS_METADATA } from '@nestjs/common/constants';
 
-// export const RMQ_CONNECT_OPTIONS = 'RMQ_CONNECT_OPTIONS';
-export const RMQ_OPTIONS= 'RMQ_Options';
+export const RMQ_OPTIONS = 'RMQ_Options';
 export const RMQ_BROKER_OPTIONS = 'RMQ_BROKER_OPTIONS';
 export const RMQ_MESSAGE_META_TEG = 'RMQ_MESSAGE_META_TEG';
 export const RMQ_ROUTES_TRANSFORM = 'RMQ_ROUTES_TRANSFORM';
-// export const RMQ_APP_OPTIONS = 'RMQ_APP_OPTIONS';
+export const GET_INTERCEPTORS = 'GET_INTERCEPTORS';
 export const TARGET_MODULE = 'TARGET_MODULE';
 export const SER_DAS_KEY = 'SER_DAS_KEY';
 export const SERDES = 'SERDES';
@@ -20,6 +19,7 @@ export const CLOSE_EVENT = 'close';
 export const CONNECT_ERROR = 'error';
 export const CONNECT_BLOCKED = 'blocked';
 export const INITIALIZATION_STEP_DELAY = 400;
+export const TIMEOUT_INIT_INTERCEPTORS = 300;
 export const DEFAULT_TIMEOUT = 40000;
 export const RECONNECTION_INTERVAL = 5000;
 export const NON_ROUTE = 'There is no that route';

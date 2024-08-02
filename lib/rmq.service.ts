@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import {
   IRMQExtendedOptions,
-  IMessageBroker,
   INotifyReply,
   IPublishOptions,
   IResult,
@@ -19,6 +18,7 @@ import {
   TypeRmqInterceptor,
   TypeRmqMiddleware,
   IRMQOptions,
+  IModuleBroker,
 } from './interfaces';
 import {
   CallbackFunctionVariadic,
@@ -72,7 +72,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     private readonly rmqErrorService: RmqErrorService,
     @Inject(RMQ_OPTIONS)
     private readonly rmQoptions: IRMQOptions,
-    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IMessageBroker,
+    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IModuleBroker,
     @Inject(SERDES) private readonly serDes: ISerDes,
     @Inject(INTERCEPTORS) private readonly interceptors: TypeRmqInterceptor[],
     @Inject(MIDDLEWARES) private readonly middlewares: TypeRmqMiddleware[],
