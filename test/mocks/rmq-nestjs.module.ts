@@ -8,31 +8,33 @@ import { MyRMQErrorHandler } from './error.handlers';
 
 @Module({
   imports: [
-    RmqModule.forFeature({
-      exchange: {
-        exchange: 'for-test',
-        type: 'topic',
+    RmqModule.forFeatureAsync({
+      useFactory: async () => ({
+        exchange: {
+          exchange: 'for-test',
+          type: 'topic',
 
-        options: {
-          durable: true,
-          autoDelete: true,
+          options: {
+            durable: true,
+            autoDelete: true,
+          },
         },
-      },
-      queue: {
-        queue: 'test-for',
-        options: { durable: true },
-        consumOptions: { noAck: false },
-      },
+        queue: {
+          queue: 'test-for',
+          options: { durable: true },
+          consumOptions: { noAck: false },
+        },
 
-      replyTo: {
-        queue: '',
-        options: { exclusive: true },
-        consumOptions: { noAck: true },
-        errorHandler: MyRMQErrorHandler,
-      },
-      interceptor: [EventInterceptorModule],
+        replyTo: {
+          queue: '',
+          options: { exclusive: true },
+          consumOptions: { noAck: true },
+          errorHandler: MyRMQErrorHandler,
+        },
+        serviceName: 'Connection-Service-Spec',
+      }),
+      interceptors: [EventInterceptorModule],
       middlewares: [EventMiddlewareModule],
-      serviceName: 'Connection-Service-Spec',
     }),
   ],
   providers: [RmqEvents, RmqServieController],
