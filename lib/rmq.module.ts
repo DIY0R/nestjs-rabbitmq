@@ -1,21 +1,20 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import { DiscoveryModule } from '@nestjs/core';
 import {
   MetaTegsScannerService,
   RmqErrorService,
+  extendedProvidersArr,
   getUniqId,
-  providersInjectionArr,
 } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
-import { defaultSerDes } from './common';
-import { IMessageBroker, IRMQOptions, IRMQOptionsAsync } from './interfaces';
 import {
-  MIDDLEWARES,
-  MODULE_TOKEN,
-  RMQ_BROKER_OPTIONS,
-  SERDES,
-} from './constants';
+  IModuleBroker,
+  IModuleBrokerAsync,
+  IRMQOptions,
+  IRMQOptionsAsync,
+} from './interfaces';
+import { MODULE_TOKEN, RMQ_BROKER_OPTIONS } from './constants';
 
 @Module({
   providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
@@ -34,20 +33,33 @@ export class RmqModule {
     };
   }
 
-  static forFeature(options: IMessageBroker): DynamicModule {
-    const interceptors = providersInjectionArr(options.interceptor);
+  static forFeature(options: IModuleBroker): DynamicModule {
+    const providerOptions = { provide: RMQ_BROKER_OPTIONS, useValue: options };
+    const providersExtended = extendedProvidersArr(options);
+    return this.generateForFeature(providerOptions, providersExtended);
+  }
+  static forFeatureAsync(options: IModuleBrokerAsync): DynamicModule {
+    const providerOptions = {
+      provide: RMQ_BROKER_OPTIONS,
+      useFactory: async (...args: any[]) => await options.useFactory(...args),
+      inject: options.inject || [],
+    };
+    const interceptors = extendedProvidersArr(options);
+    return this.generateForFeature(providerOptions, interceptors);
+  }
+  private static generateForFeature(
+    providerOptions: Provider,
+    providersExtended: Provider[],
+  ): DynamicModule {
     return {
       module: RmqModule,
       imports: [DiscoveryModule],
       providers: [
-        { provide: RMQ_BROKER_OPTIONS, useValue: options },
-        { provide: SERDES, useValue: options.serDes ?? defaultSerDes },
-        { provide: MIDDLEWARES, useValue: options.middlewares ?? [] },
-        ...interceptors,
+        providerOptions,
         RmqService,
         MetaTegsScannerService,
         RmqErrorService,
-      ],
+      ].concat(providersExtended),
       exports: [RmqService],
     };
   }

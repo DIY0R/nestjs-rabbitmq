@@ -38,17 +38,25 @@ export interface IRMQOptionsAsync extends Pick<ModuleMetadata, 'imports'> {
   useFactory?: (...args: any[]) => Promise<IRMQOptions> | IRMQOptions;
   inject?: any[];
 }
-
-export interface IMessageBroker {
+export interface IExtendedBroker {
+  serDes?: ISerDes;
+  interceptors?: TypeRmqInterceptor[];
+  middlewares?: TypeRmqMiddleware[];
+}
+export interface IModuleBroker extends IExtendedBroker {
   exchange: IExchange;
   replyTo?: IReplyQueue;
   queue?: IQueue;
-  serDes?: ISerDes;
-  interceptor?: TypeRmqInterceptor[];
-  middlewares?: TypeRmqMiddleware[];
   messageTimeout?: number;
   serviceName?: string;
 }
+export interface IModuleBrokerAsync
+  extends Pick<ModuleMetadata, 'imports'>,
+    IExtendedBroker {
+  useFactory?: (...args: any[]) => Promise<IModuleBroker> | IModuleBroker;
+  inject?: any[];
+}
+
 export interface IBindQueue {
   queue: string;
   source: string;
