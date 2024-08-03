@@ -2,7 +2,7 @@
   "name": "@diy0r/nestjs-rabbitmq",
   "version": "0.26.5",
   "description": "Nestjs rabbitMQ module",
-  "author": "Sobirov Diyorbek <sobirovdiyorkind@gmail.com>",
+  "author": "Sobirov Diyorbek <sabirovdiyorkind@gmail.com>",
   "private": false,
   "files": [
     "./dist"
@@ -55,7 +55,7 @@
   },
   "keywords": [
     "RMQ",
-    "Nestjs",
+    "Nest.js",
     "RabbitMQ",
     "amqplib",
     "amqplib-nestjs",
