@@ -21,8 +21,9 @@
   - [Send to Queue](#method-sendtoqueue)
   - [Access to the channel](#channel)
   - [Serialization/Deserialization](#serializationdeserialization)
-- [Module-Specific Configuration (forFeature)](#module-specific-configuration-forfeature)
-  - [Import module](#import-and-usage)
+- [Module-Specific Configuration](#module-specific-configuration)
+  - [ForFeature](#forfeature)
+  - [ForFeatureAsync - Async initialization](#forfeatureasync---async-initialization)
   - [Receiving messages](#receiving-messages)
   - [Middleware](#middleware)
   - [Interceptor](#interceptor)
@@ -265,11 +266,11 @@ The `serialize` method is responsible for converting a JavaScript object or any 
 
 In this case, it will be applied to all methods of [`RmqGlobalService`](#RmqGlobalService).
 
-## Module-Specific Configuration (forFeature)
+## Module-Specific Configuration
 
-The `forFeature` method allows configuring RabbitMQ parameters at the specific module level in your NestJS application. This is useful for setting up different exchanges, queues, and other RabbitMQ parameters specific to that module.
+The `forFeature` and `forFeatureAsync` methods allow configuring RabbitMQ parameters at the specific module level in your NestJS application. This is useful for setting up different exchanges, queues, and other RabbitMQ parameters specific to that module.
 
-### Import and Usage
+### forFeature
 
 To use forFeature in your module, import `RmqModule` and configure the parameters in the `forFeature` method.
 
@@ -302,7 +303,28 @@ To use forFeature in your module, import `RmqModule` and configure the parameter
 export class MyModule {}
 ```
 
-In the `forFeature(MessageBroker)` method, you need to pass an object of type `IMessageBroker`:
+### forFeatureAsync - Async initialization
+
+```ts
+RmqModule.forFeatureAsync({
+  inject: [],
+  imports: [],
+  useFactory: async () => ({
+    exchange,
+    queue,
+    replyTo,
+    //...
+  }),
+
+  interceptors: [],
+  //..
+});
+```
+
+useFactory should return an object of type `IModuleBroker`, and `serdes`, `interceptors`, and `middlewares` come after `useFactory`, not inside it, because these parameters are needed to extend the functionality. That's why they come after it.
+
+<br/>
+In the `forFeature(ModuleBroker)` method, you need to pass an object of type `IModuleBroker`:
 
 - **exchange** - exchange parameters
   - **exchange** - The name of the exchange, which should be unique.
@@ -498,7 +520,7 @@ At the module level, you can declare interceptors that will apply to all message
       queue: {
         /* queue parameters */
       },
-      interceptor: [EventInterceptor, OtherInterceptor], // Interceptor is applied to all handlers in the module!
+      interceptors: [EventInterceptor, OtherInterceptor], // Interceptors are applied to all handlers in the module!
     }),
   ],
   providers: [MyService, MyRmqEvents],
