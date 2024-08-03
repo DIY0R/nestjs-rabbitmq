@@ -1,5 +1,11 @@
 import { MessagePropertyHeaders, Options } from 'amqplib';
-import { LoggerService, ModuleMetadata } from '@nestjs/common';
+import {
+  DynamicModule,
+  ForwardReference,
+  LoggerService,
+  ModuleMetadata,
+  Type,
+} from '@nestjs/common';
 import { ISerDes } from './serdes.interface';
 import { TypeRmqInterceptor } from './interceptor.interface';
 import { TypeRmqMiddleware } from './middleware.interface';
@@ -34,9 +40,10 @@ export interface IRMQOptions {
   connectOptions: IRMQConnectConfig;
   extendedOptions?: IRMQExtendedOptions;
 }
-export interface IRMQOptionsAsync extends Pick<ModuleMetadata, 'imports'> {
+export interface IRMQOptionsAsync {
   useFactory?: (...args: any[]) => Promise<IRMQOptions> | IRMQOptions;
   inject?: any[];
+  imports?: ImportsType;
 }
 export interface IExtendedBroker {
   serDes?: ISerDes;
@@ -55,7 +62,11 @@ export interface IModuleBrokerAsync
     IExtendedBroker {
   useFactory?: (...args: any[]) => Promise<IModuleBroker> | IModuleBroker;
   inject?: any[];
+  imports?: ImportsType;
 }
+export type ImportsType = Array<
+  Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference
+>;
 
 export interface IBindQueue {
   queue: string;

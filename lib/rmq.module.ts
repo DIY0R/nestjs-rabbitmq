@@ -1,4 +1,9 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
+import {
+  DynamicModule,
+  Module,
+  ModuleMetadata,
+  Provider,
+} from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import { DiscoveryModule } from '@nestjs/core';
 import {
@@ -11,6 +16,7 @@ import { RmqNestjsCoreModule } from './rmq-core.module';
 import {
   IModuleBroker,
   IModuleBrokerAsync,
+  ImportsType,
   IRMQOptions,
   IRMQOptionsAsync,
 } from './interfaces';
@@ -45,15 +51,20 @@ export class RmqModule {
       inject: options.inject || [],
     };
     const interceptors = extendedProvidersArr(options);
-    return this.generateForFeature(providerOptions, interceptors);
+    return this.generateForFeature(
+      providerOptions,
+      interceptors,
+      options.imports,
+    );
   }
   private static generateForFeature(
     providerOptions: Provider,
     providersExtended: Provider[],
+    imports: ImportsType = [],
   ): DynamicModule {
     return {
       module: RmqModule,
-      imports: [DiscoveryModule],
+      imports: [DiscoveryModule, ...imports],
       providers: [
         providerOptions,
         RmqService,
