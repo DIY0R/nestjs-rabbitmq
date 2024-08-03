@@ -3,6 +3,7 @@
 ![logo](https://github.com/DIY0R/nestjs-rabbitmq/raw/main/img/logo.png)
 
 [![version](https://img.shields.io/npm/v/@diy0r/nestjs-rabbitmq.svg)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
+[![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-yellow)](https://www.jsdocs.io/package/@diy0r/nestjs-rabbitmq)
 [![license](https://badgen.net/npm/license/@diy0r/nestjs-rabbitmq)](https://www.npmjs.com/package/@diy0r/nestjs-rabbitmq)
 [![checker](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml)
 
