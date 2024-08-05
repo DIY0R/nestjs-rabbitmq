@@ -62,11 +62,9 @@ const extendedOptions: IRMQExtendedOptions = {
       options: { exclusive: true },
       consumOptions: { noAck: true },
     },
-    messageTimeout: 50000,
+    //..
   },
-  socketOptions: {
-    clientProperties: { connection_name: 'myFriendlyName' },
-  },
+  //...
 };
 
 @Module({
@@ -126,12 +124,16 @@ RmqModule.forRoot({
 ```
 
 <br/>
-In forRoot({ connectOptions, extendedOptions }), we pass an object consisting of two parameters. The first, connectOptions, is used for connections, and the second, extendedOptions, is for additional settings.
 
-- **connectOptions** - standard parameters [amqlib.connect](https://amqp-node.github.io/amqplib/channel_api.html#connect) for connection. Parameters can be an object or a URI.
-- **extendedOptions** - environment settings (optional)
+In `forRoot({ connectOptions, extendedOptions })`, we pass an object consisting of two parameters. The first, connectOptions, is used for connections, and the second, extendedOptions, is for additional settings.
+
+- **connectOptions: IRMQConnectConfig** - standard parameters [amqlib.connect](https://amqp-node.github.io/amqplib/channel_api.html#connect) for connection. Parameters can be an object or a URI.
+- **extendedOptions: IRMQExtendedOptions** - environment settings (optional)
 
   - **typeChannel** - [channel type](https://amqp-node.github.io/amqplib/channel_api.html#channels), default is `TypeChannel.CHANNEL`
+  - **prefetch** - Configuration for message prefetching. [See](https://amqp-node.github.io/amqplib/channel_api.html#channel_prefetch)
+    - **count** - The maximum number of messages that can be sent over the channel before receiving an acknowledgment. A falsy value indicates no limit.
+    - **isGlobal** - If `true`, applies the prefetch limit to the entire channel (for versions before RabbitMQ 3.3.0). For newer versions, this parameter is ignored as prefetch is applied per consumer.
   - **socketOptions** - here you can configure SSL/TLS. See [SSL/TLS](https://amqp-node.github.io/amqplib/ssl.html) and [Client properties](https://amqp-node.github.io/amqplib/channel_api.html#client-properties)
   - **globalBroker** - specify if you want to use RPC from `RmqGlobalService`
     - **replyTo** - needed for setting up the `replyTo` queue
