@@ -117,9 +117,14 @@ export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
   cert: Buffer | string;
   key: Buffer | string;
 }
+export interface IPrefetch {
+  count: number;
+  isGlobal: boolean;
+}
 export interface IRMQExtendedOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
+  prefetch?: IPrefetch;
   socketOptions?: ISocketOptionsSSLPFX | ISocketOptionsSSLKEY;
   typeChannel?: TypeChannel;
 }

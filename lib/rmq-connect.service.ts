@@ -37,6 +37,7 @@ import {
   ISendToReplyQueueOptions,
   TypeChannel,
   IRMQOptions,
+  IPrefetch,
 } from './interfaces';
 
 import { RQMColorLogger } from './common';
@@ -60,7 +61,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     if (this.isInitialized) throw Error(ROOT_MODULE_DECLARED);
     await this.setUpConnect(this.rmQoptions.connectOptions);
-    await this.createChannels();
+    await this.setUpChannels();
 
     this.isInitialized = true;
   }
@@ -233,18 +234,28 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       }
     }, RECONNECTION_INTERVAL);
   }
-  private async createChannels() {
+  private async setUpChannels() {
     try {
-      this.baseChannel =
-        this.rmQoptions.extendedOptions?.typeChannel ==
-        TypeChannel.CONFIRM_CHANNEL
-          ? await this.createConfirmChannel()
-          : await this.createChannel();
+      const { extendedOptions } = this.rmQoptions;
+      const isConfirmChannel =
+        extendedOptions?.typeChannel === TypeChannel.CONFIRM_CHANNEL;
+
+      this.baseChannel = isConfirmChannel
+        ? await this.createConfirmChannel()
+        : await this.createChannel();
 
       this.replyToChannel = await this.createChannel();
+
+      if (extendedOptions?.prefetch)
+        await this.prefetch(extendedOptions.prefetch);
     } catch (error) {
+      console.error('Error setting up channels:', error);
       throw error;
     }
+  }
+
+  private prefetch(prefetch: IPrefetch): Promise<Replies.Empty> {
+    return this.baseChannel.prefetch(prefetch.count, prefetch.isGlobal);
   }
 
   async sendToQueue(
