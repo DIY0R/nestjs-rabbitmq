@@ -50,10 +50,10 @@ export class RmqModule {
       useFactory: async (...args: any[]) => await options.useFactory(...args),
       inject: options.inject || [],
     };
-    const interceptors = extendedProvidersArr(options);
+    const providersExtended = extendedProvidersArr(options);
     return this.generateForFeature(
       providerOptions,
-      interceptors,
+      providersExtended,
       options.imports,
     );
   }
