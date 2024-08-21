@@ -144,13 +144,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   async listenReplyQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
-    consumOptions?: Options.Consume,
+    consumeOptions?: Options.Consume,
   ) {
     try {
       await this.replyToChannel.consume(
         queue,
         listenQueue,
-        consumOptions || {
+        consumeOptions || {
           noAck: true,
         },
       );
@@ -161,13 +161,13 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   async listenQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
-    consumOptions?: Options.Consume,
+    consumeOptions?: Options.Consume,
   ): Promise<void> {
     try {
       await this.baseChannel.consume(
         queue,
         listenQueue,
-        consumOptions || {
+        consumeOptions || {
           noAck: false,
         },
       );

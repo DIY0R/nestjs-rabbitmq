@@ -60,7 +60,7 @@ const extendedOptions: IRMQExtendedOptions = {
     replyTo: {
       queue: '',
       options: { exclusive: true },
-      consumOptions: { noAck: true },
+      consumeOptions: { noAck: true },
     },
     //..
   },
@@ -139,7 +139,7 @@ In `forRoot({ connectOptions, extendedOptions })`, we pass an object consisting 
     - **replyTo** - needed for setting up the `replyTo` queue
       - **queue** - queue name. It's recommended to leave it as an empty string so RabbitMQ will automatically generate a unique name.
       - **options** - options passed as the second parameter in [assertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue)
-      - **consumOptions** - configure the consumer with a callback that will be invoked with each message. [See](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+      - **consumeOptions** - configure the consumer with a callback that will be invoked with each message. [See](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
       - **errorHandler** (class) - custom error handler for dealing with errors from replies that extends [`RMQErrorHandler`](#throw-error-and-handling).
     - **serDes** (object) - The serDes parameter is an object that defines serialization and deserialization functions for handling messages. [See](#serializationdeserialization)
     - **messageTimeout** - Number of milliseconds the `send` method will wait for the response before a timeout error. Default is 40,000.
@@ -292,12 +292,12 @@ To use forFeature in your module, import `RmqModule` and configure the parameter
       queue: {
         queue: 'queue',
         options: { durable: true },
-        consumOptions: { noAck: false },
+        consumeOptions: { noAck: false },
       },
       replyTo: {
         queue: '',
         options: { exclusive: true },
-        consumOptions: { noAck: true },
+        consumeOptions: { noAck: true },
       },
     }),
   ],
@@ -336,11 +336,11 @@ In the `forFeature(ModuleBroker)` method, you need to pass an object of type `IM
 - **queue** - An object containing the queue parameters. (optional)
   - **queue** - The name of the queue, which should be unique.
   - **options** - The default queue parameters from `Options.AssertQueue`. See [Channel AssertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue).
-  - **consumOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+  - **consumeOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
 - **replyTo** - needed for setting up the `replyTo` queue (optional)
   - **queue** - The name of the queue, which should be unique.
   - **options** - The default queue parameters from `Options.AssertQueue`. See [Channel AssertQueue](https://amqp-node.github.io/amqplib/channel_api.html#channel_assertQueue).
-  - **consumOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
+  - **consumeOptions** - configure the consumer with a callback that will be invoked with each message. See [Channel Consume](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume)
   - **errorHandler** (class) - custom error handler for dealing with errors from replies that extends [`RMQErrorHandler`](#throw-error-and-handling).
 - **serviceName** - The name of your service. (optional)
 - **messageTimeout** - The timeout for waiting for a response, with a default value of 40000ms. (optional)
@@ -355,7 +355,7 @@ export class MyRmqEvents {
   constructor(private readonly rmqService: RmqService) {}
   @MessageRoute('text.text')
   received(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqService.ack(consumeMessage); // call if 'consumOptions: { noAck: false }'
+    this.rmqService.ack(consumeMessage); // call if 'consumeOptions: { noAck: false }'
     return { message: obj };
   }
   @MessageRoute('*.*.rpc') // subscribe with a pattern!
@@ -395,7 +395,7 @@ method(message: ISend, consumeMessage: ConsumeMessage) {}
 The @MessageRoute decorator will automatically bind the queue and RoutingKey to the exchange specified in the forFeature method, and this routing key will only be visible inside the specific module (e.g., [`MyModule`](#import-and-usage)). Just like magic! <br/>
 In some cases, when a non-processable message arrives in the queue, it will stay there forever unless it is processed. In such cases, the `@MessageNonRoute` decorator can help. The method bound to this decorator will be called only when the request cannot find a bound routing key to the exchange.
 
-If you want to manually acknowledge messages, set `consumOptions: { noAck: false }` in the queue. If you want the library to automatically acknowledge messages, set `noAck: true`, so you don't have to explicitly call `ack`.
+If you want to manually acknowledge messages, set `consumeOptions: { noAck: false }` in the queue. If you want the library to automatically acknowledge messages, set `noAck: true`, so you don't have to explicitly call `ack`.
 
 ### Middleware
 

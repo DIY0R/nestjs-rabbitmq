@@ -15,7 +15,7 @@ import { RMQErrorHandler } from '../common';
 export interface IQueue {
   queue: string;
   options?: Options.AssertQueue;
-  consumOptions?: Options.Consume;
+  consumeOptions?: Options.Consume;
 }
 export interface IReplyQueue extends IQueue {
   errorHandler?: typeof RMQErrorHandler;

@@ -30,7 +30,7 @@ describe('RMQe2e', () => {
                 replyTo: {
                   queue: '',
                   options: { exclusive: true },
-                  consumOptions: { noAck: true },
+                  consumeOptions: { noAck: true },
                   errorHandler: MyGlobalRMQErrorHandler,
                 },
                 messageTimeout: 50000,

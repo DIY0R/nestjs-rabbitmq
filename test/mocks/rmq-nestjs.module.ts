@@ -22,13 +22,13 @@ import { MyRMQErrorHandler } from './error.handlers';
         queue: {
           queue: 'test-for',
           options: { durable: true },
-          consumOptions: { noAck: false },
+          consumeOptions: { noAck: false },
         },
 
         replyTo: {
           queue: '',
           options: { exclusive: true },
-          consumOptions: { noAck: true },
+          consumeOptions: { noAck: true },
           errorHandler: MyRMQErrorHandler,
         },
         serviceName: 'Connection-Service-Spec',

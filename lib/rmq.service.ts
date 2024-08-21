@@ -22,7 +22,7 @@ import {
 } from './interfaces';
 import {
   CallbackFunctionVariadic,
-  IConsumFunction,
+  IConsumeFunction,
   IMetaTegsMap,
   MetaTegEnpoint,
 } from './interfaces/metategs';
@@ -304,7 +304,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       .map((middleware: any) => new middleware());
   }
   private async handleMessage(
-    handler: IConsumFunction,
+    handler: IConsumeFunction,
     messageParse: string,
     message: ConsumeMessage,
   ): Promise<IResult> {
@@ -342,7 +342,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async bindQueueExchange() {
-    const { queue: queueName, consumOptions } = this.options.queue;
+    const { queue: queueName, consumeOptions } = this.options.queue;
     if (!this.rmqMessageTegs?.size) return this.logger.warn(NON_DECLARED_ROUTE);
     const queue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.QUEUE,
@@ -358,12 +358,12 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     await this.rmqNestjsConnectService.listenQueue(
       queueName,
       this.listenQueue.bind(this),
-      consumOptions,
+      consumeOptions,
     );
   }
 
   private async assertReplyQueue() {
-    const { queue, options, consumOptions } = this.options.replyTo;
+    const { queue, options, consumeOptions } = this.options.replyTo;
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
       { queue, options },
@@ -371,7 +371,7 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
       this.listenReplyQueue.bind(this),
-      consumOptions,
+      consumeOptions,
     );
   }
   public ack(

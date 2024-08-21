@@ -174,7 +174,7 @@ export class RmqGlobalService implements OnModuleInit {
     await this.rmqNestjsConnectService.listenReplyQueue(
       this.replyToQueue.queue,
       this.listenReplyQueue.bind(this),
-      this.extendedOptions.globalBroker.replyTo.consumOptions,
+      this.extendedOptions.globalBroker.replyTo.consumeOptions,
     );
   }
   private async initializationCheck() {
