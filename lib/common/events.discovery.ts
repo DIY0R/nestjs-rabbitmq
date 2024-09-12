@@ -75,8 +75,9 @@ export class MetaTegsScannerService {
   ) {
     const method = instance[methodName];
     const event = this.getMetaData<string>(metaTeg, method);
-    const boundHandler = instance[methodName].bind(instance);
+
     if (event) {
+      const boundHandler = method.bind(instance);
       const serdes = this.getSerDesMetaData(method, instance.constructor);
       const middlewares = this.getLinesMetaDate<TypeRmqMiddleware>(
         method,
