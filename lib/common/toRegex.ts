@@ -1,10 +1,13 @@
 export const toRegex = (pattern: string): RegExp => {
   const word = '[a-z]+';
-  pattern = pattern.replace(/#(?:\.#)+/g, '#');
-  pattern = pattern.replace(/\*/g, word);
-  if (pattern === '#') return new RegExp(`(?:${word}(?:\\.${word})*)?`);
-  pattern = pattern.replace(/^#\./, `(?:${word}\\.)*`);
-  pattern = pattern.replace(/\.#/g, `(?:\\.${word})*`);
-  pattern = pattern.replace(/(?<!\\)\./g, '\\.');
-  return new RegExp(`^${pattern}$`);
+  const normalizedPattern = pattern.replace(/#(?:\.#)+/g, '#');
+  const withWildcardReplaced = normalizedPattern.replace(/\*/g, word);
+  if (withWildcardReplaced === '#') {
+    return new RegExp(`(?:${word}(?:\\.${word})*)?`);
+  }
+  const withHashReplaced = withWildcardReplaced
+    .replace(/^#\./, `(?:${word}\\.)*`)
+    .replace(/\.#/g, `(?:\\.${word})*`);
+  const escapedDots = withHashReplaced.replace(/(?<!\\)\./g, '\\.');
+  return new RegExp(`^${escapedDots}$`);
 };
