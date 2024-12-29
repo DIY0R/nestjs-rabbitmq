@@ -40,16 +40,19 @@ export interface IRMQOptions {
   connectOptions: IRMQConnectConfig;
   extendedOptions?: IRMQExtendedOptions;
 }
+
 export interface IRMQOptionsAsync {
   useFactory?: (...args: any[]) => Promise<IRMQOptions> | IRMQOptions;
   inject?: any[];
   imports?: ImportsType;
 }
+
 export interface IExtendedBroker {
   serDes?: ISerDes;
   interceptors?: TypeRmqInterceptor[];
   middlewares?: TypeRmqMiddleware[];
 }
+
 export interface IModuleBroker extends IExtendedBroker {
   exchange: IExchange;
   replyTo?: IReplyQueue;
@@ -57,13 +60,13 @@ export interface IModuleBroker extends IExtendedBroker {
   messageTimeout?: number;
   serviceName?: string;
 }
-export interface IModuleBrokerAsync
-  extends Pick<ModuleMetadata, 'imports'>,
-    IExtendedBroker {
+
+export interface IModuleBrokerAsync extends Pick<ModuleMetadata, 'imports'>, IExtendedBroker {
   useFactory?: (...args: any[]) => Promise<IModuleBroker> | IModuleBroker;
   inject?: any[];
   imports?: ImportsType;
 }
+
 export type ImportsType = Array<
   Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference
 >;
@@ -91,36 +94,43 @@ export interface ISendToReplyQueueOptions {
   correlationId: string;
   headers: IRmqErrorHeaders | MessagePropertyHeaders;
 }
+
 export interface IAppOptions {
   logger?: LoggerService;
   logMessages: boolean;
 }
+
 export interface IGlobalBroker {
   replyTo: IReplyQueue;
   messageTimeout?: number;
   serviceName?: string;
   serDes?: ISerDes;
-  errorssHandler?: typeof RMQErrorHandler;
+  errorsHandler?: typeof RMQErrorHandler;
 }
 
 export interface ISocketOptions {
   clientProperties?: { connection_name: string };
 }
+
 interface ISocketOptionsCa extends ISocketOptions {
   passphrase?: string;
   ca?: (Buffer | string)[];
 }
+
 export interface ISocketOptionsSSLPFX extends ISocketOptionsCa {
   pfx?: Buffer | string;
 }
+
 export interface ISocketOptionsSSLKEY extends ISocketOptionsCa {
   cert: Buffer | string;
   key: Buffer | string;
 }
+
 export interface IPrefetch {
   count: number;
   isGlobal: boolean;
 }
+
 export interface IRMQExtendedOptions {
   globalBroker?: IGlobalBroker;
   appOptions?: IAppOptions;
@@ -128,6 +138,7 @@ export interface IRMQExtendedOptions {
   socketOptions?: ISocketOptionsSSLPFX | ISocketOptionsSSLKEY;
   typeChannel?: TypeChannel;
 }
+
 export interface INotifyReply {
   status: string;
 }

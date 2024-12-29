@@ -26,12 +26,8 @@ export class RmqErrorGlobalService {
 
   public errorHandler(msg: Message): any {
     const { headers } = msg.properties;
-    const errorHandler =
-      this.rmQoptions.extendedOptions?.globalBroker.replyTo.errorHandler;
-
-    return errorHandler
-      ? errorHandler.handle(headers)
-      : RMQErrorHandler.handle(headers);
+    const errorHandler = this.rmQoptions.extendedOptions?.globalBroker.replyTo.errorHandler;
+    return errorHandler ? errorHandler.handle(headers) : RMQErrorHandler.handle(headers);
   }
 
   private isRMQError(error: Error | RMQError): boolean {
@@ -40,17 +36,14 @@ export class RmqErrorGlobalService {
 }
 @Injectable()
 export class RmqErrorService extends RmqErrorGlobalService {
-  constructor(
-    @Inject(RMQ_BROKER_OPTIONS) private readonly options: IModuleBroker,
-  ) {
+  constructor(@Inject(RMQ_BROKER_OPTIONS) private readonly options: IModuleBroker) {
     super();
   }
+
   public errorHandler(msg: Message): RMQError {
     const { headers } = msg.properties;
     const errorHandler = this.options.replyTo.errorHandler;
-    return errorHandler
-      ? errorHandler.handle(headers)
-      : RMQErrorHandler.handle(headers);
+    return errorHandler ? errorHandler.handle(headers) : RMQErrorHandler.handle(headers);
   }
 }
 export class RMQError extends Error {
@@ -59,13 +52,7 @@ export class RMQError extends Error {
   status?: number;
   date?: string;
   host?: string;
-  constructor(
-    message: string,
-    service?: string,
-    status?: number,
-    host?: string,
-    date?: string,
-  ) {
+  constructor(message: string, service?: string, status?: number, host?: string, date?: string) {
     super();
     Object.setPrototypeOf(this, new.target.prototype);
     this.message = message;
@@ -77,9 +64,7 @@ export class RMQError extends Error {
 }
 
 export class RMQErrorHandler {
-  public static handle(
-    headers: IRmqErrorHeaders | MessagePropertyHeaders,
-  ): Error | RMQError {
+  public static handle(headers: IRmqErrorHeaders | MessagePropertyHeaders): Error | RMQError {
     return new RMQError(
       headers['-x-error'],
       headers['-x-service'],

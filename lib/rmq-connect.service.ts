@@ -1,10 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  LoggerService,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import {
   CLOSE_EVENT,
   CLOSE_MESSAGE,
@@ -52,17 +46,17 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
   private isInitialized = false;
   constructor(
     @Inject(RMQ_OPTIONS)
-    private readonly rmQoptions: IRMQOptions,
+    private readonly RMQOptions: IRMQOptions,
   ) {
-    this.logger = rmQoptions.extendedOptions?.appOptions?.logger
-      ? rmQoptions.extendedOptions.appOptions.logger
-      : new RQMColorLogger(rmQoptions.extendedOptions?.appOptions?.logMessages);
+    this.logger = RMQOptions.extendedOptions?.appOptions?.logger
+      ? RMQOptions.extendedOptions.appOptions.logger
+      : new RQMColorLogger(RMQOptions.extendedOptions?.appOptions?.logMessages);
   }
+
   async onModuleInit(): Promise<void> {
     if (this.isInitialized) throw Error(ROOT_MODULE_DECLARED);
-    await this.setUpConnect(this.rmQoptions.connectOptions);
+    await this.setUpConnect(this.RMQOptions.connectOptions);
     await this.setUpChannels();
-
     this.isInitialized = true;
   }
 
@@ -76,41 +70,35 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       );
       return exchange;
     } catch (error) {
-      throw new Error(
-        `Failed to assert exchange '${options.exchange}': ${error.message}`,
-      );
+      throw new Error(`Failed to assert exchange '${options.exchange}': ${error.message}`);
     }
   }
+
   ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
     return this.baseChannel.ack(...params);
   }
+
   nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
     return this.baseChannel.nack(...params);
   }
-  async assertQueue(
-    typeQueue: TypeQueue,
-    options?: IQueue,
-  ): Promise<Replies.AssertQueue> {
+
+  async assertQueue(typeQueue: TypeQueue, options?: IQueue): Promise<Replies.AssertQueue> {
     await this.initializationCheck();
     try {
-      if (typeQueue == TypeQueue.QUEUE)
-        return await this.baseChannel.assertQueue(
-          options.queue,
-          options.options,
-        );
-
-      return await this.replyToChannel.assertQueue(
-        options.queue,
-        options.options,
-      );
+      if (typeQueue == TypeQueue.QUEUE) {
+        return this.baseChannel.assertQueue(options.queue, options.options);
+      }
+      return await this.replyToChannel.assertQueue(options.queue, options.options);
     } catch (error) {
       throw new Error(`Failed to assert ${typeQueue} queue: ${error}`);
     }
   }
+
   async getBaseChannel() {
     await this.initializationCheck();
     return this.baseChannel;
   }
+
   async bindQueue(bindQueue: IBindQueue): Promise<void> {
     await this.initializationCheck();
     try {
@@ -121,26 +109,22 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
         bindQueue.args,
       );
     } catch (error) {
-      throw new Error(
-        `Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`,
-      );
+      throw new Error(`Failed to Bind Queue ,source:${bindQueue.source} queue: ${bindQueue.queue}`);
     }
   }
+
   async sendToReplyQueue(sendToQueueOptions: ISendToReplyQueueOptions) {
     try {
       await this.initializationCheck();
-      this.replyToChannel.sendToQueue(
-        sendToQueueOptions.replyTo,
-        sendToQueueOptions.content,
-        {
-          correlationId: sendToQueueOptions.correlationId,
-          headers: sendToQueueOptions.headers,
-        },
-      );
+      this.replyToChannel.sendToQueue(sendToQueueOptions.replyTo, sendToQueueOptions.content, {
+        correlationId: sendToQueueOptions.correlationId,
+        headers: sendToQueueOptions.headers,
+      });
     } catch (error) {
       throw new Error(`Failed to send Reply Queue`);
     }
   }
+
   async listenReplyQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
@@ -158,6 +142,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to send listen Reply Queue`);
     }
   }
+
   async listenQueue(
     queue: string,
     listenQueue: (msg: ConsumeMessage | null) => void,
@@ -201,21 +186,20 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     try {
       this.connection = await connect(
         connectOptions,
-        this.rmQoptions.extendedOptions?.socketOptions,
+        this.RMQOptions.extendedOptions?.socketOptions,
       );
       this.isConnected = true;
       this.logger.log(SUCCESSFUL_CONNECT);
-
-      this.connection.on(CLOSE_EVENT, (err) => {
+      this.connection.on(CLOSE_EVENT, err => {
         this.isConnected = false;
         this.logger.error(`${CLOSE_MESSAGE}: ${err.message}`);
         this.reconnect(connectOptions);
       });
 
-      this.connection.on(CONNECT_ERROR, (err) => {
+      this.connection.on(CONNECT_ERROR, err => {
         this.logger.error(`${CONNECT_FAILED_MESSAGE}: ${err.message}`);
       });
-      this.connection.on(CONNECT_BLOCKED, (err) => {
+      this.connection.on(CONNECT_BLOCKED, err => {
         this.logger.error(`${CONNECT_BLOCKED_MESSAGE}: ${err.message}`);
       });
     } catch (err) {
@@ -234,20 +218,16 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       }
     }, RECONNECTION_INTERVAL);
   }
+
   private async setUpChannels() {
     try {
-      const { extendedOptions } = this.rmQoptions;
-      const isConfirmChannel =
-        extendedOptions?.typeChannel === TypeChannel.CONFIRM_CHANNEL;
-
+      const { extendedOptions } = this.RMQOptions;
+      const isConfirmChannel = extendedOptions?.typeChannel === TypeChannel.CONFIRM_CHANNEL;
       this.baseChannel = isConfirmChannel
         ? await this.createConfirmChannel()
         : await this.createChannel();
-
       this.replyToChannel = await this.createChannel();
-
-      if (extendedOptions?.prefetch)
-        await this.prefetch(extendedOptions.prefetch);
+      if (extendedOptions?.prefetch) await this.prefetch(extendedOptions.prefetch);
     } catch (error) {
       console.error('Error setting up channels:', error);
       throw error;
@@ -258,11 +238,7 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
     return this.baseChannel.prefetch(prefetch.count, prefetch.isGlobal);
   }
 
-  async sendToQueue(
-    queue: string,
-    content: Buffer,
-    options?: Options.Publish,
-  ): Promise<boolean> {
+  async sendToQueue(queue: string, content: Buffer, options?: Options.Publish): Promise<boolean> {
     try {
       await this.initializationCheck();
       return this.baseChannel.sendToQueue(queue, content, options);
@@ -270,19 +246,21 @@ export class RmqNestjsConnectService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Failed to send message ${error}`);
     }
   }
+
   private async initializationCheck() {
     if (this.isInitialized) return;
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
-    );
+    await new Promise<void>(resolve => setTimeout(resolve, INITIALIZATION_STEP_DELAY));
     await this.initializationCheck();
   }
+
   private async createChannel() {
     return await this.connection.createChannel();
   }
+
   private async createConfirmChannel() {
     return await this.connection.createConfirmChannel();
   }
+
   async onModuleDestroy(): Promise<void> {
     await this.baseChannel.close();
     await this.replyToChannel.close();

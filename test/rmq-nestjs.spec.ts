@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { RmqServieController } from './mocks/rmq.controller';
+import { RmqServiceController } from './mocks/rmq.controller';
 import { RmqModule, RmqService, TypeChannel, RMQError } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 import { hostname } from 'node:os';
@@ -9,7 +9,7 @@ import { MyClass } from './mocks/dto/myClass.dto';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
-  let rmqServieController: RmqServieController;
+  let rmqServiceController: RmqServiceController;
   let rmqService: RmqService;
 
   beforeAll(async () => {
@@ -37,10 +37,8 @@ describe('RMQe2e', () => {
                 messageTimeout: 50000,
                 serviceName: 'global service',
                 serDes: {
-                  deserialize: (message: Buffer): any =>
-                    JSON.parse(message.toString()),
-                  serialize: (message: any): Buffer =>
-                    Buffer.from(JSON.stringify(message)),
+                  deserialize: (message: Buffer): any => JSON.parse(message.toString()),
+                  serialize: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
                 },
               },
               socketOptions: {
@@ -57,8 +55,7 @@ describe('RMQe2e', () => {
     api = apiModule.createNestApplication();
     await api.init();
 
-    rmqServieController =
-      apiModule.get<RmqServieController>(RmqServieController);
+    rmqServiceController = apiModule.get<RmqServiceController>(RmqServiceController);
     rmqService = apiModule.get<RmqService>(RmqService);
   });
 
@@ -70,13 +67,13 @@ describe('RMQe2e', () => {
   describe('notify', () => {
     it('successful global notify()', async () => {
       const obj = { time: '001', fulled: 12 };
-      const response = await rmqServieController.sendNotify(obj);
+      const response = await rmqServiceController.sendNotify(obj);
       expect(response).toEqual({ status: 'ok' });
     });
 
     it('successful service notify()', async () => {
       const obj = { time: '001', fulled: 12 };
-      const response = await rmqServieController.sendNotifyService(obj);
+      const response = await rmqServiceController.sendNotifyService(obj);
       expect(response).toEqual({ status: 'ok' });
     });
   });
@@ -84,45 +81,42 @@ describe('RMQe2e', () => {
   describe('rpc exchange', () => {
     it('successful global send()', async () => {
       const obj = { time: '001', fulled: 12 };
-      const { message } = await rmqServieController.sendGlobal(
-        obj,
-        'global.rpc',
-      );
+      const { message } = await rmqServiceController.sendGlobal(obj, 'global.rpc');
       expect(message).toEqual(obj);
     });
 
     it('successful send()', async () => {
       const obj = { obj: 1 };
       const topic = 'text.text';
-      const { message } = await rmqServieController.sendMessage(obj, topic);
+      const { message } = await rmqServiceController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
 
     it('successful send() but return nothing', async () => {
       const obj = { obj: 1 };
       const topic = 'text.nothing';
-      const message = await rmqServieController.sendMessage(obj, topic);
+      const message = await rmqServiceController.sendMessage(obj, topic);
       expect(message).toEqual({});
     });
 
     it('send topic pattern #1 "*"', async () => {
       const obj = { time: 1 };
       const topic = 'message.rpc.tsp';
-      const { message } = await rmqServieController.sendMessage(obj, topic);
+      const { message } = await rmqServiceController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
 
     it('send topic pattern #2 "#"', async () => {
       const obj = { time: 1 };
       const topic = 'rpc.text.text';
-      const { message } = await rmqServieController.sendMessage(obj, topic);
+      const { message } = await rmqServiceController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
 
     it('send mix topic pattern #3 "*#"', async () => {
       const obj = { time: 1 };
       const topic = 'text.rpc.mix.pool.too';
-      const { message } = await rmqServieController.sendMessage(obj, topic);
+      const { message } = await rmqServiceController.sendMessage(obj, topic);
       expect(message).toEqual(obj);
     });
 
@@ -130,7 +124,7 @@ describe('RMQe2e', () => {
       try {
         const obj = { time: 1 };
         const topic = 'error.error';
-        await rmqServieController.sendMessage(obj, topic);
+        await rmqServiceController.sendMessage(obj, topic);
       } catch (error) {
         expect((error as RMQError).host).toBe(hostname());
       }
@@ -140,7 +134,7 @@ describe('RMQe2e', () => {
       try {
         const obj = { time: 1 };
         const topic = 'error.error.rmq';
-        await rmqServieController.sendMessage(obj, topic);
+        await rmqServiceController.sendMessage(obj, topic);
       } catch (error) {
         expect((error as RMQError).status).toBe(302);
         expect((error as RMQError).date).toBe(new Date().getMonth().toString());
@@ -151,7 +145,7 @@ describe('RMQe2e', () => {
       try {
         const obj = { time: 1 };
         const topic = 'error.error.rmq';
-        await rmqServieController.sendGlobal(obj, topic);
+        await rmqServiceController.sendGlobal(obj, topic);
       } catch (error) {
         expect((error as RMQError).status).toBe(302);
         expect((error as RMQError).date).toBe(new Date().getDate().toString());
@@ -162,7 +156,7 @@ describe('RMQe2e', () => {
   describe('send message to queue', () => {
     it('send to Queue', async () => {
       const obj = { aq: 1121 };
-      const status = await rmqServieController.sendToQueue('test-for', obj);
+      const status = await rmqServiceController.sendToQueue('test-for', obj);
       expect(status).toBeTruthy();
     });
   });
@@ -171,7 +165,7 @@ describe('RMQe2e', () => {
     it('send with interceptors', async () => {
       const obj = { arrayInterceptor: [0] };
       const topic = 'text.interceptor';
-      const message = await rmqServieController.sendMessageWithProvider<{
+      const message = await rmqServiceController.sendMessageWithProvider<{
         arrayInterceptor: number[];
       }>(obj, topic);
       expect(message.arrayInterceptor).toEqual([0, 1, 2, 3, 4, 5, 6]);
@@ -180,7 +174,7 @@ describe('RMQe2e', () => {
     it('send with middleware', async () => {
       const obj = { arrayMiddleware: [0] };
       const topic = 'text.middleware';
-      const message = await rmqServieController.sendMessageWithProvider<{
+      const message = await rmqServiceController.sendMessageWithProvider<{
         arrayMiddleware: number[];
       }>(obj, topic);
       expect(message.arrayMiddleware).toEqual([0, 1, 2, 3]);
@@ -189,7 +183,7 @@ describe('RMQe2e', () => {
     it('send with middleware that returned', async () => {
       const obj = {};
       const topic = 'text.middleware.return';
-      const message = await rmqServieController.sendMessageWithProvider<{
+      const message = await rmqServiceController.sendMessageWithProvider<{
         return: boolean;
       }>(obj, topic);
       expect(message).toEqual({ return: true });
@@ -203,10 +197,7 @@ describe('RMQe2e', () => {
         age: 20,
         name: 'Diy0r',
       };
-      const { message } = await rmqServieController.sendMessage(
-        objMessage,
-        topic,
-      );
+      const { message } = await rmqServiceController.sendMessage(objMessage, topic);
       expect(message).toEqual(message);
     });
 
@@ -217,7 +208,7 @@ describe('RMQe2e', () => {
           age: '20',
           name: 'FooLii1p',
         };
-        await rmqServieController.sendMessage(objMessage, topic);
+        await rmqServiceController.sendMessage(objMessage, topic);
       } catch (error) {
         expect(error.message).toEqual(
           'The name must be less than 5; age must be an integer number',
@@ -233,7 +224,7 @@ describe('RMQe2e', () => {
 });
 
 async function delay(time: number): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(() => {
       resolve();
     }, time);

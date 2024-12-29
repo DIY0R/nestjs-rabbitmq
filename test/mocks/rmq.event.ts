@@ -8,17 +8,14 @@ import {
   RmqInterceptor,
   SerDes,
   RMQValidate,
+  RMQError,
 } from '../../lib';
-import {
-  EventInterceptorClass,
-  EventInterceptorEndpoint,
-} from './event.interceptor';
+import { EventInterceptorClass, EventInterceptorEndpoint } from './event.interceptor';
 import {
   EventMiddlewareClass,
   EventMiddlewareEndpoint,
   EventMiddlewareEndpointReturn,
 } from './event.middleware';
-import { RMQError } from '../../lib';
 import { MyClass } from './dto/myClass.dto';
 
 @Injectable()
@@ -29,15 +26,16 @@ import { MyClass } from './dto/myClass.dto';
 @RmqMiddleware(EventMiddlewareClass)
 @RmqInterceptor(EventInterceptorClass)
 export class RmqEvents {
-  constructor(private readonly rmqServie: RmqService) {}
+  constructor(private readonly rmqService: RmqService) {}
   @MessageRoute('text.text')
-  recived(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receive(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
+
   @MessageRoute('text.nothing')
-  recivedReturnNoting(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveReturnNoting(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
   }
 
   @MessageRoute('*.rpc.*')
@@ -45,78 +43,84 @@ export class RmqEvents {
     deserialize: (message: Buffer): any => JSON.parse(message.toString()),
     serialize: (message: any): Buffer => Buffer.from(JSON.stringify(message)),
   })
-  recivedTopic(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveTopic(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
 
   @MessageRoute('*.rpc.mix.#')
-  recivedMixTopic(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveMixTopic(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
+
   @MessageRoute('global.rpc')
-  recivedGlobal(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveGlobal(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
 
   @MessageRoute('rpc.#')
-  recivedTopicPattern(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveTopicPattern(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
+
   @MessageRoute('error.error')
-  recivedTopicError(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveTopicError(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     throw new Error('error');
   }
+
   @MessageRoute('error.error.rmq')
-  recivedTopicErrorRmq(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveTopicErrorRmq(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     throw new RMQError('error', 'myService', 302);
   }
+
   @MessageRoute('notify.global')
-  recivedTopicNotify(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveTopicNotify(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     Logger.log(obj);
   }
+
   @MessageRoute('text.interceptor')
   @RmqInterceptor(EventInterceptorEndpoint)
-  recivedMessage(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveMessage(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return obj;
   }
 
   @RmqMiddleware(EventMiddlewareEndpoint)
   @MessageRoute('text.middleware')
   messageMiddleware(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+    this.rmqService.ack(consumeMessage);
     return obj;
   }
 
   @RmqMiddleware(EventMiddlewareEndpointReturn)
   @MessageRoute('text.middleware.return')
   messageMiddlewareReturn(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+    this.rmqService.ack(consumeMessage);
     return obj;
   }
+
   @MessageRoute('text.number')
   numberGet(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+    this.rmqService.ack(consumeMessage);
     return { number: obj.number };
   }
 
   @MessageRoute('message.valid')
   @RMQValidate()
   getValidMessage(obj: MyClass, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
 
   @MessageNonRoute()
-  recivedNonRoute(obj: any, consumeMessage: ConsumeMessage) {
-    this.rmqServie.ack(consumeMessage);
+  receiveNonRoute(obj: any, consumeMessage: ConsumeMessage) {
+    this.rmqService.ack(consumeMessage);
     return { message: obj };
   }
 }

@@ -1,17 +1,7 @@
-import {
-  DynamicModule,
-  Module,
-  ModuleMetadata,
-  Provider,
-} from '@nestjs/common';
+import { DynamicModule, Module, ModuleMetadata, Provider } from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import { DiscoveryModule } from '@nestjs/core';
-import {
-  MetaTegsScannerService,
-  RmqErrorService,
-  extendedProvidersArr,
-  getUniqId,
-} from './common';
+import { MetaTagsScannerService, RmqErrorService, extendedProvidersArr, getUniqId } from './common';
 import { RmqNestjsCoreModule } from './rmq-core.module';
 import {
   IModuleBroker,
@@ -26,16 +16,17 @@ import { MODULE_TOKEN, RMQ_BROKER_OPTIONS } from './constants';
   providers: [{ provide: MODULE_TOKEN, useFactory: getUniqId }],
 })
 export class RmqModule {
-  static forRoot(rmQoptions: IRMQOptions): DynamicModule {
+  static forRoot(RMQOptions: IRMQOptions): DynamicModule {
     return {
       module: RmqModule,
-      imports: [RmqNestjsCoreModule.forRoot(rmQoptions)],
+      imports: [RmqNestjsCoreModule.forRoot(RMQOptions)],
     };
   }
-  static forRootAsync(rmQoptionsAsync: IRMQOptionsAsync): DynamicModule {
+
+  static forRootAsync(RMQOptionsAsync: IRMQOptionsAsync): DynamicModule {
     return {
       module: RmqModule,
-      imports: [RmqNestjsCoreModule.forRootAsync(rmQoptionsAsync)],
+      imports: [RmqNestjsCoreModule.forRootAsync(RMQOptionsAsync)],
     };
   }
 
@@ -44,6 +35,7 @@ export class RmqModule {
     const providersExtended = extendedProvidersArr(options);
     return this.generateForFeature(providerOptions, providersExtended);
   }
+
   static forFeatureAsync(options: IModuleBrokerAsync): DynamicModule {
     const providerOptions = {
       provide: RMQ_BROKER_OPTIONS,
@@ -51,12 +43,9 @@ export class RmqModule {
       inject: options.inject || [],
     };
     const providersExtended = extendedProvidersArr(options);
-    return this.generateForFeature(
-      providerOptions,
-      providersExtended,
-      options.imports,
-    );
+    return this.generateForFeature(providerOptions, providersExtended, options.imports);
   }
+
   private static generateForFeature(
     providerOptions: Provider,
     providersExtended: Provider[],
@@ -65,12 +54,9 @@ export class RmqModule {
     return {
       module: RmqModule,
       imports: [DiscoveryModule, ...imports],
-      providers: [
-        providerOptions,
-        RmqService,
-        MetaTegsScannerService,
-        RmqErrorService,
-      ].concat(providersExtended),
+      providers: [providerOptions, RmqService, MetaTagsScannerService, RmqErrorService].concat(
+        providersExtended,
+      ),
       exports: [RmqService],
     };
   }

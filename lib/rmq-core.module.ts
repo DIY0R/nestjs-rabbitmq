@@ -10,27 +10,27 @@ import { RmqErrorGlobalService } from './common';
   providers: [RmqErrorGlobalService],
 })
 export class RmqNestjsCoreModule {
-  static forRoot(rmQoptions: IRMQOptions): DynamicModule {
+  static forRoot(RMQOptions: IRMQOptions): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
       providers: [
-        { provide: RMQ_OPTIONS, useValue: rmQoptions },
+        { provide: RMQ_OPTIONS, useValue: RMQOptions },
         RmqNestjsConnectService,
         RmqGlobalService,
       ],
       exports: [RmqNestjsConnectService, RmqGlobalService, RMQ_OPTIONS],
     };
   }
-  static forRootAsync(rmQoptions: IRMQOptionsAsync): DynamicModule {
+
+  static forRootAsync(RMQOptionsAsync: IRMQOptionsAsync): DynamicModule {
     return {
       module: RmqNestjsCoreModule,
-      imports: rmQoptions.imports,
+      imports: RMQOptionsAsync.imports,
       providers: [
         {
           provide: RMQ_OPTIONS,
-          useFactory: async (...args: any[]) =>
-            await rmQoptions.useFactory(...args),
-          inject: rmQoptions.inject || [],
+          useFactory: async (...args: any[]) => await RMQOptionsAsync.useFactory(...args),
+          inject: RMQOptionsAsync.inject || [],
         },
         RmqNestjsConnectService,
         RmqGlobalService,

@@ -1,12 +1,5 @@
 import { Inject, LoggerService, OnModuleInit } from '@nestjs/common';
-import {
-  ConsumeMessage,
-  Message,
-  Replies,
-  Channel,
-  Options,
-  ConfirmChannel,
-} from 'amqplib';
+import { ConsumeMessage, Message, Replies, Channel, Options, ConfirmChannel } from 'amqplib';
 import { EventEmitter } from 'stream';
 import { RmqNestjsConnectService } from './rmq-connect.service';
 import {
@@ -45,23 +38,26 @@ export class RmqGlobalService implements OnModuleInit {
   private isInitialized = false;
 
   constructor(
-    @Inject(RMQ_OPTIONS) private readonly rmQoptions: IRMQOptions,
+    @Inject(RMQ_OPTIONS) private readonly RMQOptions: IRMQOptions,
     private readonly rmqNestjsConnectService: RmqNestjsConnectService,
     private readonly rmqErrorGlobalService: RmqErrorGlobalService,
   ) {
-    this.extendedOptions = rmQoptions.extendedOptions ?? {};
+    this.extendedOptions = RMQOptions.extendedOptions ?? {};
     this.serDes = this.extendedOptions?.globalBroker?.serDes ?? defaultSerDes;
-    this.logger = rmQoptions.extendedOptions?.appOptions?.logger
-      ? rmQoptions.extendedOptions.appOptions.logger
+    this.logger = RMQOptions.extendedOptions?.appOptions?.logger
+      ? RMQOptions.extendedOptions.appOptions.logger
       : new RQMColorLogger(this.extendedOptions?.appOptions?.logMessages);
   }
+
   async onModuleInit() {
     if (this.extendedOptions?.globalBroker?.replyTo) await this.replyQueue();
     this.isInitialized = true;
   }
+
   get channel(): Promise<Channel | ConfirmChannel> {
     return this.rmqNestjsConnectService.getBaseChannel();
   }
+
   public async send<IMessage, IReply>(
     exchange: string,
     topic: string,
@@ -78,9 +74,9 @@ export class RmqGlobalService implements OnModuleInit {
         const timerId = setTimeout(() => reject(TIMEOUT_ERROR), timeout);
         this.sendResponseEmitter.once(correlationId, (msg: Message) => {
           clearTimeout(timerId);
-          if (msg.properties?.headers?.['-x-error'])
+          if (msg.properties?.headers?.['-x-error']) {
             return reject(this.rmqErrorGlobalService.errorHandler(msg));
-
+          }
           const content = msg.content;
           if (content.toString()) resolve(this.serDes.deserialize(content));
         });
@@ -136,8 +132,9 @@ export class RmqGlobalService implements OnModuleInit {
         },
         confirmationFunction,
       );
-      if (this.extendedOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL)
+      if (this.extendedOptions?.typeChannel !== TypeChannel.CONFIRM_CHANNEL) {
         resolve({ status: 'ok' });
+      }
     });
   }
 
@@ -154,18 +151,16 @@ export class RmqGlobalService implements OnModuleInit {
     return status;
   }
 
-  public ack(
-    ...params: Parameters<Channel['ack']>
-  ): ReturnType<Channel['ack']> {
+  public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
     return this.rmqNestjsConnectService.ack(...params);
   }
-  private async listenReplyQueue(
-    message: ConsumeMessage | null,
-  ): Promise<void> {
+
+  private async listenReplyQueue(message: ConsumeMessage | null): Promise<void> {
     if (message.properties.correlationId) {
       this.sendResponseEmitter.emit(message.properties.correlationId, message);
     }
   }
+
   private async replyQueue() {
     this.replyToQueue = await this.rmqNestjsConnectService.assertQueue(
       TypeQueue.REPLY_QUEUE,
@@ -177,11 +172,10 @@ export class RmqGlobalService implements OnModuleInit {
       this.extendedOptions.globalBroker.replyTo.consumeOptions,
     );
   }
+
   private async initializationCheck() {
     if (this.isInitialized) return;
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, INITIALIZATION_STEP_DELAY),
-    );
+    await new Promise<void>(resolve => setTimeout(resolve, INITIALIZATION_STEP_DELAY));
     await this.initializationCheck();
   }
 }

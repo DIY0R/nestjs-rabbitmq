@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RmqModule } from '../../lib';
 import { RmqEvents } from './rmq.event';
-import { RmqServieController } from './rmq.controller';
+import { RmqServiceController } from './rmq.controller';
 import { EventInterceptorModule } from './event.interceptor';
 import { EventMiddlewareModule } from './event.middleware';
 import { MyRMQErrorHandler } from './error.handlers';
@@ -37,7 +37,7 @@ import { MyRMQErrorHandler } from './error.handlers';
       middlewares: [EventMiddlewareModule],
     }),
   ],
-  providers: [RmqEvents, RmqServieController],
-  exports: [RmqServieController, RmqModule],
+  providers: [RmqEvents, RmqServiceController],
+  exports: [RmqServiceController, RmqModule],
 })
 export class ConnectionMockModule {}

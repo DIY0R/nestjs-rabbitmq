@@ -13,7 +13,7 @@ import {
 } from '../constants';
 import {
   CallbackFunctionVariadic,
-  IMetaTegsMap,
+  IMetaTagsMap,
   IRmqInterceptor,
   ISerDes,
   TypeRmqInterceptor,
@@ -22,42 +22,35 @@ import {
 import { RQMColorLogger } from './logger';
 
 @Injectable()
-export class MetaTegsScannerService {
+export class MetaTagsScannerService {
   private logger = new RQMColorLogger(false);
   constructor(
     private readonly metadataScanner: MetadataScanner,
     private readonly reflector: Reflector,
     private readonly modulesContainer: ModulesContainer,
   ) {}
+
   public findModulesByProviderValue(tokenValue: string): Module {
-    for (const module of this.modulesContainer.values())
+    for (const module of this.modulesContainer.values()) {
       for (const importedModule of module.imports.values()) {
         const provider = importedModule.providers.get(MODULE_TOKEN);
         if (provider && provider.instance === tokenValue) return module;
       }
+    }
     return null;
   }
 
-  public scan(metaTeg: string, tokenValue: string) {
-    const rmqMessagesMap: IMetaTegsMap = new Map();
+  public scan(metaTag: string, tokenValue: string) {
+    const rmqMessagesMap: IMetaTagsMap = new Map();
     const currentModule = this.findModulesByProviderValue(tokenValue);
     if (!currentModule) return rmqMessagesMap;
-    const providersAndControllers =
-      this.getProvidersAndControllers(currentModule);
-
+    const providersAndControllers = this.getProvidersAndControllers(currentModule);
     providersAndControllers.forEach((provider: InstanceWrapper) => {
       const { instance } = provider;
       if (instance instanceof Object) {
         const allMethodNames = this.metadataScanner.getAllMethodNames(instance);
-
         allMethodNames.forEach((name: string) =>
-          this.lookupMethods(
-            metaTeg,
-            rmqMessagesMap,
-            instance,
-            name,
-            currentModule.injectables,
-          ),
+          this.lookupMethods(metaTag, rmqMessagesMap, instance, name, currentModule.injectables),
         );
       }
     });
@@ -67,16 +60,16 @@ export class MetaTegsScannerService {
   private getProvidersAndControllers(module: Module) {
     return [...module.providers.values(), ...module.controllers.values()];
   }
+
   private lookupMethods(
-    metaTeg: string,
-    rmqMessagesMap: IMetaTegsMap,
+    metaTag: string,
+    rmqMessagesMap: IMetaTagsMap,
     instance: object,
     methodName: string,
     injectables: Map<InjectionToken, InstanceWrapper<InjectableInterface>>,
   ) {
     const method = instance[methodName];
-    const event = this.getMetaData<string>(metaTeg, method);
-
+    const event = this.getMetaData<string>(metaTag, method);
     if (event) {
       const boundHandler = method.bind(instance);
       const serdes = this.getSerDesMetaData(method, instance.constructor);
@@ -85,11 +78,7 @@ export class MetaTegsScannerService {
         instance.constructor,
         MIDDLEWARES_METADATA,
       );
-      const interceptors = this.getInterceptors(
-        injectables,
-        method,
-        instance.constructor,
-      );
+      const interceptors = this.getInterceptors(injectables, method, instance.constructor);
       const validate = this.getValidation(instance, method);
       rmqMessagesMap.set(event, {
         handler: boundHandler,
@@ -101,12 +90,14 @@ export class MetaTegsScannerService {
       this.logger.log('Mapped ' + event, MESSAGE_ROUTER);
     }
   }
+
   private getSerDesMetaData(method: CallbackFunctionVariadic, target: object) {
     return (
       this.getMetaData<ISerDes>(SER_DAS_KEY, method) ||
       this.getMetaData<ISerDes>(SER_DAS_KEY, target)
     );
   }
+
   private getLinesMetaDate<T>(
     method: CallbackFunctionVariadic,
     classProvider: Record<string, any>,
@@ -114,8 +105,9 @@ export class MetaTegsScannerService {
   ): T[] {
     const methodMeta = this.getMetaData<T>(key, method);
     const targetMeta = this.getMetaData<T>(key, classProvider);
-    return [targetMeta, methodMeta].filter((meta) => meta !== undefined);
+    return [targetMeta, methodMeta].filter(meta => meta !== undefined);
   }
+
   private getInterceptors(
     injectables: Map<any, any>,
     method: CallbackFunctionVariadic,
@@ -126,18 +118,13 @@ export class MetaTegsScannerService {
       classProvider,
       INTERCEPTOR_CUSTOM_METADATA,
     );
-    return interceptors.map((interceptor) => {
-      const instance: IRmqInterceptor = injectables.get(
-        interceptor[0],
-      ).instance;
+    return interceptors.map(interceptor => {
+      const instance: IRmqInterceptor = injectables.get(interceptor[0]).instance;
       return instance.intercept.bind(instance);
     });
   }
 
-  private getValidation(
-    instance: Record<string, any>,
-    method: CallbackFunctionVariadic,
-  ) {
+  private getValidation(instance: Record<string, any>, method: CallbackFunctionVariadic) {
     const validator = this.reflector.get(RMQ_VALIDATE, method);
     if (!validator) return null;
     const paramTypes = Reflect.getMetadata(

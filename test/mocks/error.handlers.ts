@@ -2,9 +2,7 @@ import { MessagePropertyHeaders } from 'amqplib';
 import { IRmqErrorHeaders, RMQError } from '../../lib';
 
 export class MyRMQErrorHandler {
-  public static handle(
-    headers: IRmqErrorHeaders | MessagePropertyHeaders,
-  ): Error | RMQError {
+  public static handle(headers: IRmqErrorHeaders | MessagePropertyHeaders): Error | RMQError {
     return new RMQError(
       headers['-x-error'],
       headers['-x-service'],
@@ -15,9 +13,7 @@ export class MyRMQErrorHandler {
   }
 }
 export class MyGlobalRMQErrorHandler {
-  public static handle(
-    headers: IRmqErrorHeaders | MessagePropertyHeaders,
-  ): Error | RMQError {
+  public static handle(headers: IRmqErrorHeaders | MessagePropertyHeaders): Error | RMQError {
     return new RMQError(
       headers['-x-error'],
       headers['-x-service'],
