@@ -7,6 +7,7 @@ import {
   MessageRoute,
   RmqInterceptor,
   SerDes,
+  RMQValidate,
 } from '../../lib';
 import {
   EventInterceptorClass,
@@ -18,6 +19,8 @@ import {
   EventMiddlewareEndpointReturn,
 } from './event.middleware';
 import { RMQError } from '../../lib';
+import { MyClass } from './dto/myClass.dto';
+
 @Injectable()
 @SerDes({
   deserialize: (message: Buffer): any => JSON.parse(message.toString()),
@@ -102,6 +105,13 @@ export class RmqEvents {
   numberGet(obj: any, consumeMessage: ConsumeMessage) {
     this.rmqServie.ack(consumeMessage);
     return { number: obj.number };
+  }
+
+  @MessageRoute('message.valid')
+  @RMQValidate()
+  getValidMessage(obj: MyClass, consumeMessage: ConsumeMessage) {
+    this.rmqServie.ack(consumeMessage);
+    return { message: obj };
   }
 
   @MessageNonRoute()

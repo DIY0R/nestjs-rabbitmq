@@ -5,6 +5,7 @@ import { RmqModule, RmqService, TypeChannel, RMQError } from '../lib';
 import { ConnectionMockModule } from './mocks/rmq-nestjs.module';
 import { hostname } from 'node:os';
 import { MyGlobalRMQErrorHandler } from './mocks/error.handlers';
+import { MyClass } from './mocks/dto/myClass.dto';
 
 describe('RMQe2e', () => {
   let api: INestApplication;
@@ -192,6 +193,36 @@ describe('RMQe2e', () => {
         return: boolean;
       }>(obj, topic);
       expect(message).toEqual({ return: true });
+    });
+  });
+
+  describe('validation messages', () => {
+    it('send valid message', async () => {
+      const topic = 'message.valid';
+      const objMessage: MyClass = {
+        age: 20,
+        name: 'Diy0r',
+      };
+      const { message } = await rmqServieController.sendMessage(
+        objMessage,
+        topic,
+      );
+      expect(message).toEqual(message);
+    });
+
+    it('send invalid message', async () => {
+      try {
+        const topic = 'message.valid';
+        const objMessage = {
+          age: '20',
+          name: 'FooLii1p',
+        };
+        await rmqServieController.sendMessage(objMessage, topic);
+      } catch (error) {
+        expect(error.message).toEqual(
+          'The name must be less than 5; age must be an integer number',
+        );
+      }
     });
   });
 
