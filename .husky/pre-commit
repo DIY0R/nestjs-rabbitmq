@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
 npx --no-install commitlint --edit "$1"
+npm run lint
 npm run test
-

@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"lib/**/*.ts\"",
-    "lint": "eslint \"{lib,test}/**/*.ts\" --fix",
+    "lint:fix": "eslint \"{lib,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{lib,test}/**/*.ts\"",
     "prepare": "husky",
     "release": "release-it",
     "test": "jest"
