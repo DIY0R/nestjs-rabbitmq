@@ -11,6 +11,7 @@ export interface MetaTegEnpoint {
   serdes?: ISerDes | undefined;
   interceptors: CallbackFunctionVariadic[];
   middlewares: TypeRmqMiddleware[];
+  validate: null;
 }
 export type IMetaTegsMap = Map<string, MetaTegEnpoint>;
 export interface IDescriptorRoute {

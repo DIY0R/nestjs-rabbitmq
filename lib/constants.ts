@@ -7,6 +7,7 @@ export const RMQ_ROUTES_TRANSFORM = 'RMQ_ROUTES_TRANSFORM';
 export const GET_INTERCEPTORS = 'GET_INTERCEPTORS';
 export const TARGET_MODULE = 'TARGET_MODULE';
 export const SER_DAS_KEY = 'SER_DAS_KEY';
+export const RMQ_VALIDATE = 'RMQ_VALIDATE';
 export const SERDES = 'SERDES';
 export const INTERCEPTORS = 'INTERCEPTORS';
 export const MIDDLEWARES = 'MIDDLEWARES';

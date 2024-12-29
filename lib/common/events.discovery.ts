@@ -8,6 +8,7 @@ import {
   MESSAGE_ROUTER,
   MIDDLEWARES_METADATA,
   MODULE_TOKEN,
+  RMQ_VALIDATE,
   SER_DAS_KEY,
 } from '../constants';
 import {
@@ -89,11 +90,13 @@ export class MetaTegsScannerService {
         method,
         instance.constructor,
       );
+      const validate = this.getValidation(instance, method);
       rmqMessagesMap.set(event, {
         handler: boundHandler,
         serdes,
         interceptors,
         middlewares,
+        validate,
       });
       this.logger.log('Mapped ' + event, MESSAGE_ROUTER);
     }
@@ -129,6 +132,20 @@ export class MetaTegsScannerService {
       ).instance;
       return instance.intercept.bind(instance);
     });
+  }
+
+  private getValidation(
+    instance: Record<string, any>,
+    method: CallbackFunctionVariadic,
+  ) {
+    const validator = this.reflector.get(RMQ_VALIDATE, method);
+    if (!validator) return null;
+    const paramTypes = Reflect.getMetadata(
+      'design:paramtypes',
+      Object.getPrototypeOf(instance),
+      method.name,
+    );
+    return paramTypes[0];
   }
 
   private getMetaData<T>(key: string, target: any) {

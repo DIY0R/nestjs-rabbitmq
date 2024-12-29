@@ -54,6 +54,12 @@ import { getUniqId } from './common/get-uniqId';
 import { EventEmitter } from 'stream';
 import { RQMColorLogger } from './common/logger';
 import { ModuleRef } from '@nestjs/core';
+import { validate } from 'class-validator';
+import {
+  ClassConstructor,
+  plainToClass,
+  plainToInstance,
+} from 'class-transformer';
 
 @Injectable()
 export class RmqService implements OnModuleInit, OnModuleDestroy {
@@ -207,14 +213,9 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
     messageParse: any,
     consumer?: MetaTegEnpoint,
   ): Promise<IResult> {
-    if (!consumer) {
-      return {
-        content: {},
-        headers: this.rmqErrorService.buildError(
-          new RMQError(NON_ROUTE, this.options.serviceName),
-        ),
-      };
-    }
+    if (!consumer) return this.buildErrorResponse(NON_ROUTE);
+    const errorMessages = await this.validate(messageParse, consumer.validate);
+    if (errorMessages) return this.buildErrorResponse(errorMessages);
     const middlewareResut = await this.executeMiddlewares(
       consumer,
       message,
@@ -303,6 +304,22 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       .concat(consumer.middlewares)
       .map((middleware: any) => new middleware());
   }
+
+  private async validate(
+    messageParse: object,
+    paramType: ClassConstructor<object>,
+  ): Promise<string | undefined> {
+    if (!paramType) return;
+    const object = Object.assign(new paramType(), messageParse);
+    const errors = await validate(object);
+    if (errors.length) {
+      const message = errors
+        .flatMap((error) => Object.values(error.constraints))
+        .join('; ');
+      return message;
+    }
+  }
+
   private async handleMessage(
     handler: IConsumeFunction,
     messageParse: string,
@@ -374,6 +391,16 @@ export class RmqService implements OnModuleInit, OnModuleDestroy {
       consumeOptions,
     );
   }
+
+  private buildErrorResponse(errorMessage: string): IResult {
+    return {
+      content: {},
+      headers: this.rmqErrorService.buildError(
+        new RMQError(errorMessage, this.options.serviceName),
+      ),
+    };
+  }
+
   public ack(
     ...params: Parameters<Channel['ack']>
   ): ReturnType<Channel['ack']> {
