@@ -9,6 +9,7 @@
 [![checker](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/DIY0R/nestjs-rabbitmq/actions/workflows/main.yml)
 
 ---
+
 # Description
 
 This library simplifies interaction with RabbitMQ using a modular approach, where each module is linked to a specific exchange and queue, making it ideal for scalable applications like API Gateways. It offers flexible initialization methods (`ForRoot`, `ForRootAsync`), supports RPC (`send`), notifications (`notify`), and direct queue messaging, and provides middleware and interceptors for message processing. Additional features include serialization/deserialization, health-check tools, and advanced error handling (`RMQErrorHandler`). With extensive configuration options (`ForFeature`,`ForFeatureAsync`) and support for advanced RabbitMQ pattern topics.
@@ -32,6 +33,7 @@ This library simplifies interaction with RabbitMQ using a modular approach, wher
   - [ForFeature](#forfeature)
   - [ForFeatureAsync - Async initialization](#forfeatureasync---async-initialization)
   - [Receiving messages](#receiving-messages)
+  - [Validation](#validation)
   - [Middleware](#middleware)
   - [Interceptor](#interceptor)
   - [RmqService](#rmqservice)
@@ -403,6 +405,40 @@ In some cases, when a non-processable message arrives in the queue, it will stay
 
 If you want to manually acknowledge messages, set `consumeOptions: { noAck: false }` in the queue. If you want the library to automatically acknowledge messages, set `noAck: true`, so you don't have to explicitly call `ack`.
 
+Here’s a more polished version of your text:
+
+---
+
+### Validation
+
+`@diy0r/nestjs-rabbitmq` integrates seamlessly with `class-validator` to validate incoming messages. To use it, annotate your route method with `@RMQValidate()`.
+
+```typescript
+@MessageRoute('message.valid')
+@RMQValidate()
+getValidMessage(obj: MyClass, consumeMessage: ConsumeMessage) {
+  this.rmqService.ack(consumeMessage);
+  return { message: obj };
+}
+```
+
+Here, `MyClass` represents the validation schema:
+
+```typescript
+import { IsInt, IsString, MaxLength } from 'class-validator';
+
+export class MyClass {
+  @IsString()
+  @MaxLength(5, { message: 'The name must be less than 5 characters.' })
+  name: string;
+
+  @IsInt()
+  age: number;
+}
+```
+
+If the input message fails validation, the library will immediately send back an error without invoking your method, middlewares and interceptors.
+
 ### Middleware
 
 Middleware allows you to execute additional logic before message processing.You can declare middleware at various levels, including the module level, provider level, and specific endpoint level.
@@ -501,10 +537,7 @@ To declare an interceptor, implement the abstract class `IRmqInterceptor` with a
 @Injectable()
 export class EventInterceptor implements IRmqInterceptor {
   constructor(private readonly rmqSerivce: RmqService) {}
-  async intercept(
-    message: ConsumeMessage,
-    content: any,
-  ): Promise<ReverseFunction> {
+  async intercept(message: ConsumeMessage, content: any): Promise<ReverseFunction> {
     console.log('Before...');
     return async (content: any, message: ConsumeMessage) => {
       console.log(`After... ${Date.now() - now}ms`);
@@ -711,9 +744,7 @@ If you call `rmqGlobalService.send`, the `errorHandler` from `forRoot` will be u
 
 ```ts
 export class MyRMQErrorHandler extends RMQErrorHandler {
-  public static handle(
-    headers: IRmqErrorHeaders | MessagePropertyHeaders,
-  ): Error | RMQError {
+  public static handle(headers: IRmqErrorHeaders | MessagePropertyHeaders): Error | RMQError {
     // do something ...
     return new RMQError(
       headers['-x-error'],
