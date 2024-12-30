@@ -7,6 +7,7 @@ on:
       - '*'
 jobs:
   publish-npm:
+    environment: publish-npm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,6 +21,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
   publish-gpr:
+    environment: publish-gpr
     runs-on: ubuntu-latest
     permissions:
       contents: read
