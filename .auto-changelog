@@ -1,0 +1,7 @@
+{
+   "ignoreCommitPattern": "^chore",
+    "output": "CHANGELOG.md",
+    "template": "compact",
+    "commitLimit": false,  
+    "hideCredit": true
+}
