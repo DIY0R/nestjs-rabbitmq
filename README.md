@@ -12,7 +12,7 @@
 
 # Description
 
-This library simplifies interaction with RabbitMQ using a modular approach, where each module is linked to a specific exchange and queue, making it ideal for scalable applications like API Gateways. It offers flexible initialization methods (`ForRoot`, `ForRootAsync`), supports RPC (`send`), notifications (`notify`), and direct queue messaging, and provides middleware and interceptors for message processing. Additional features include serialization/deserialization, health-check tools, and advanced error handling (`RMQErrorHandler`). With extensive configuration options (`ForFeature`,`ForFeatureAsync`) and support for advanced RabbitMQ pattern topics.
+This library simplifies interaction with RabbitMQ using a modular approach, where each module is linked to a specific exchange and queue. It is ideal for scalable applications, such as API Gateways. The library offers flexible initialization methods (`ForRoot`, `ForRootAsync`), supports RPC (`send`), notifications (`notify`), direct queue messaging, and provides middleware, validation, and interceptors for message processing. Additional features include serialization/deserialization, health check tools, and advanced error handling (`RMQErrorHandler`). It also includes extensive configuration options (`ForFeature`, `ForFeatureAsync`) and support for advanced RabbitMQ pattern topics.
 
 ---
 
